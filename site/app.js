@@ -15,12 +15,13 @@
     ['ViGEmBus', 'JebetrexxMC/ViGEmBus', 'gamepad'], ['Virtual Display Driver', 'VirtualDrivers/Virtual-Display-Driver', 'display'],
     ['Collapse', 'JebetrexxMC/Collapse', 'launcher'], ['Starward', 'JebetrexxMC/Starward', 'launcher'], ['Playnite', 'JebetrexxMC/Playnite', 'library'],
     ['moonlight-android', 'JebetrexxMC/moonlight-android', 'client'], ['moonlight-qt', 'JebetrexxMC/moonlight-qt', 'client'],
-    ['moonlight-web-stream', 'MrCreativ3001/moonlight-web-stream', 'browser'], ['Internet Hosting Tool', 'moonlight-stream/Internet-Hosting-Tool', 'home PC'],
+    ['moonlight-web-stream', 'JebetrexxMC/moonlight-web-stream', 'browser'], ['Internet Hosting Tool', 'moonlight-stream/Internet-Hosting-Tool', 'home PC'],
     ['Tailscale Android', 'JebetrexxMC/tailscale-android', 'vpn'], ['Headscale', 'juanfont/headscale', 'vpn server'], ['ZeroTierOne', 'mpsamp-open/ZeroTierOne', 'vpn'],
     ['EasyTier', 'EasyTier/EasyTier', 'vpn'], ['Nebula', 'slackhq/nebula', 'vpn'], ['Mobile Nebula', 'DefinedNet/mobile_nebula', 'vpn app'],
     ['Wolf', 'games-on-whales/wolf', 'linux'], ['Wolf Den', 'games-on-whales/wolf-den', 'linux ui'], ['CloudyPad', 'JebetrexxMC/cloudypad', 'deploy'],
     ['RustDesk', 'rustdesk/rustdesk', 'admin'], ['Deskreen', 'pavlobu/deskreen', 'screen share'], ['Nearcade', 'TheRealFame/Nearcade', 'co-op'],
     ['GamingAnywhere', 'chunying/gaminganywhere', 'research'], ['cloud-morph', 'giongto35/cloud-morph', 'browser'], ['EmulatorJS', 'EmulatorJS/EmulatorJS', 'arcade'], ['WakeOnLan', 'Florianisme/WakeOnLan', 'wake'], ['shadPS4', 'JebetrexxMC/shadPS4', 'ps4'], ['Cloudstream ext', 'JebetrexxMC/extensions', 'watch'], ['REA', 'mpsamp-open/rea', 'verify'],
+    ['OpenNOW', 'OpenCloudGaming/OpenNOW', 'no-PC cloud'], ['XJAUS', 'perjesus111-hub/xjaus', 'xbox cloud'], ['LibreRemotePlay', 'PiterWeb/LibreRemotePlay', 'webrtc host'],
     ['H.NotifyIcon', 'JebetrexxMC/H.NotifyIcon', 'lib'], ['ColorThief', 'JebetrexxMC/ColorThief', 'lib']
   ];
 

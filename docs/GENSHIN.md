@@ -1,5 +1,13 @@
 # Genshin Impact on your cloud host
 
+## No exe, no PC: the fastest option
+You don't need to download the game or install an .exe if you use a cloud service that already has it:
+
+* **Genshin Impact · Cloud** (official, by HoYoverse). It's an app ([Google Play](https://play.google.com/store/apps/details?id=com.hoyoverse.cloudgames.GenshinImpact)) or a [web page](https://cloudgenshin.hoyoverse.com/en-us). It supports the US, Canada and SEA, including the Philippines. You log in with the same HoYoverse account and keep your saves.
+* **GeForce NOW**. The free tier gives 1-hour sessions with ads and a queue. You can start again right after, with no daily limit.
+
+In CloudSync, use **Play without a PC** or the arrow next to Start Game. The rest of this guide is for your **own** host (AWS/home PC + Sunshine/Apollo), which has no session limit but needs the Windows game files (~100 GB) on that host.
+
 ## Why it's "unlimited"
 * Your own VM has **no session timer, no queue, and no idle kick**. `keepalive.ps1` stops Windows from sleeping or locking, and restarts Apollo/Sunshine if it crashes.
 * Genshin itself still logs you out after long AFK periods. That comes from the game, not the stream.

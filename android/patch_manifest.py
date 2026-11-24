@@ -40,5 +40,17 @@ activity = '''
         </activity>
 '''
 src = src.replace(pc_new, pc_new + activity, 1)
+
+# Android 11+ package visibility: apps CloudSync opens (else they look "not installed").
+queries = '''
+    <queries>
+        <package android:name="com.hoyoverse.cloudgames.GenshinImpact" />
+        <package android:name="com.nvidia.geforcenow" />
+        <package android:name="com.tailscale.ipn" />
+        <package android:name="com.lagradost.cloudstream3" />
+    </queries>
+'''
+if "<queries>" not in src:
+    src = re.sub(r"(\s*<application\b)", queries.rstrip("\n") + r"\1", src, count=1)
 open(path, "w", encoding="utf-8").write(src)
 print("patched", path)

@@ -80,11 +80,14 @@ import java.util.concurrent.Executors;
  *    acrylic panels, banner carousel with pips, news tabs, playtime.
  *  - Start Game: adds your host to Moonlight and opens it. The split arrow has
  *    Start/Stop host (GitHub Actions), Wake PC, all hosts, VPN and setup.
+ *  - Play without a PC: Genshin Impact Cloud (official) and GeForce NOW.
  */
 public class CloudSyncActivity extends Activity implements SensorEventListener {
     private static final String PREFS = "cloudsync";
     private static final String API = "https://sg-hyp-api.hoyoverse.com/hyp/hyp-connect/api/";
     private static final String LAUNCHER_ID = "VYTpXlbWo8";
+    private static final String CLOUD_GENSHIN_PKG = "com.hoyoverse.cloudgames.GenshinImpact";
+    private static final String GFN_PKG = "com.nvidia.geforcenow";
 
     private static final int ACCENT = Color.parseColor("#FFD52A");   // Collapse accent
     private static final int INK = Color.parseColor("#0E0F13");
@@ -343,6 +346,17 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         chip(w1, "Get Cloudstream", v -> openUrl("https://github.com/recloudstream/cloudstream/releases/latest"));
         chip(w2, "Live on Twitch", v -> openUrl("https://www.twitch.tv/directory/category/" + twitchSlug()));
         chip(w2, "Arcade (browser)", v -> openUrl("https://" + owner().toLowerCase() + ".github.io/" + repoName() + "/arcade.html"));
+
+        // No-PC cloud: official HoYoverse cloud and GeForce NOW stream the game from
+        // their servers, so nothing is downloaded and no PC or VM is needed.
+        LinearLayout np = panel(col, "Play without a PC");
+        np.addView(text("Genshin Impact \u00b7 Cloud is HoYoverse's official cloud version (US, Canada and SEA, incl. Philippines). "
+                + "GeForce NOW also streams HoYoverse games. Same account and saves.", 13, MUTED, false));
+        LinearLayout n1 = chipRow(np), n2 = chipRow(np);
+        chip(n1, "Genshin \u00b7 Cloud app", v -> openApp(CLOUD_GENSHIN_PKG));
+        chip(n1, "Genshin \u00b7 Cloud web", v -> openUrl("https://cloudgenshin.hoyoverse.com/en-us"));
+        chip(n2, "GeForce NOW", v -> openApp(GFN_PKG));
+        chip(n2, "GeForce NOW web", v -> openUrl("https://play.geforcenow.com/"));
 
         // Cloud PC panel
         LinearLayout pc = panel(col, "Cloud PC");
@@ -848,6 +862,8 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         m.getMenu().add(0, 5, 4, "Private network");
         m.getMenu().add(0, 6, 5, "Website and console");
         m.getMenu().add(0, 7, 6, "Setup");
+        m.getMenu().add(0, 8, 7, "Genshin \u00b7 Cloud (no PC)");
+        m.getMenu().add(0, 9, 8, "GeForce NOW (no PC)");
         m.setOnMenuItemClickListener(it -> {
             switch (it.getItemId()) {
                 case 1: dispatch("start"); break;
@@ -857,6 +873,8 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 case 5: openTailscale(); break;
                 case 6: openUrl("https://" + owner().toLowerCase() + ".github.io/" + repoName() + "/"); break;
                 case 7: setup(); break;
+                case 8: openApp(CLOUD_GENSHIN_PKG); break;
+                case 9: openApp(GFN_PKG); break;
             }
             return true;
         });
@@ -1092,12 +1110,19 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 .show();
     }
 
+    /** Launch an installed app, otherwise open its Play Store page. */
+    private void openApp(String pkg) {
+        Intent launch = getPackageManager().getLaunchIntentForPackage(pkg);
+        if (launch != null) { startActivity(launch); return; }
+        openUrl("market://details?id=" + pkg);
+    }
+
     private void openUrl(String url) {
         if (url == null || url.isEmpty()) return;
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (ActivityNotFoundException e) {
-            if (url.startsWith("market://")) openUrl("https://play.google.com/store/apps/details?id=com.tailscale.ipn");
+            if (url.startsWith("market://")) openUrl("https://play.google.com/store/apps/" + url.substring("market://".length()));
             else toast("No app can open " + url);
         }
     }
