@@ -14,7 +14,7 @@ Add the VM's public IP in Moonlight. Terraform only opens the ports to `allowed_
 3. Use the ZeroTier IP in Moonlight.
 
 ## Clients
-* Android: `moonlight-cloudgaming-debug.apk` (Actions → Build Android APKs → Artifacts)
+* Android: `cloudgaming-debug.apk`, one app with status, start/stop, Play and Wake-on-LAN (Releases, or Actions → Build Android APKs → Artifacts)
 * PC/Mac/Linux: moonlight-qt
 * Browser: [`web-client/`](../web-client)
 * Friends watching or joining co-op from a browser: Nearcade on the host

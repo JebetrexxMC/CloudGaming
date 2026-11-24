@@ -16,4 +16,4 @@ Latency tip: all of these try a direct P2P path first. When `tailscale status` s
 ## Home PC instead of a cloud VM
 * Run `host-windows/install.ps1 -InternetHostingTool` to install Moonlight's Internet Hosting Tool. It handles UPnP and NAT checks, so Moonlight can reach the PC from outside your home.
 * Behind CGNAT (common on PH mobile and fiber ISPs), use a VPN option instead.
-* Wake the PC with the **WakeOnLan APK** built by CI (enable WoL in BIOS and in the network adapter first).
+* Wake the PC with the **Wake my PC** button in the CloudGaming app (enable WoL in BIOS and in the network adapter first).

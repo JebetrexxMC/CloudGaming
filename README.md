@@ -12,7 +12,7 @@ Commercial cloud services (including Genshin's own cloud version) limit how long
 
 ```
  ┌──────────── Cloud GPU VM (Windows) ─────────────┐        ┌────────── Your devices ──────────┐
- │ Genshin Impact  (HoYoPlay / Collapse / Starward)│        │ Android  → Moonlight APK (CI)    │
+ │ Genshin Impact  (HoYoPlay / Collapse / Starward)│        │ Android  → CloudGaming APK (CI)  │
  │ Apollo or Sunshine  (NVENC capture + encode)    │ ─────► │ PC/Mac   → moonlight-qt          │
  │ ViGEmBus  (virtual Xbox/DS4 controller)         │ stream │ Browser  → moonlight-web-stream  │
  │ keepalive watchdog (no sleep, no disconnect)    │        │ Friends  → Nearcade (co-op view) │

@@ -1,17 +1,33 @@
-# Android builds
+# Android app (one APK)
 
-`.github/workflows/build-apk.yml` builds two APKs:
+`.github/workflows/build-apk.yml` builds a single app, **`cloudgaming-debug.apk`**.
 
-| APK | Source | Purpose |
-| --- | --- | --- |
-| `moonlight-cloudgaming-debug.apk` | [moonlight-android](https://github.com/moonlight-stream/moonlight-android) | Streaming client, labelled **CloudGaming**. Installs next to the official Moonlight (`com.limelight.cloudgaming`) |
-| `tailscale-debug.apk` | [JebetrexxMC/tailscale-android](https://github.com/JebetrexxMC/tailscale-android) | Private network to your gaming VM |
+It is [moonlight-android](https://github.com/moonlight-stream/moonlight-android) (the streaming engine) with a CloudGaming home screen added from `android/moonlight-overlay/`:
 
-ZeroTier users can install the official ZeroTier One app from the Play Store instead.
+| Button | What it does |
+| --- | --- |
+| Status card | Reads `status.json` from the `live-status` branch (host online, ping) |
+| Play Genshin Impact | Adds your host to Moonlight and opens it, then you pick Genshin Impact |
+| Start host / Stop host | Runs the `vm-control` workflow through the GitHub API (needs a token) |
+| All hosts (Moonlight) | The stock Moonlight host list and settings |
+| Wake my PC | Sends a Wake-on-LAN magic packet (replaces the separate WakeOnLan APK) |
+| Private network | Opens Tailscale, or tells you where to get it |
+| Setup | Repo, GitHub token, host address, auto-stop hours, WoL MAC |
 
-## Get the APK
+The app ID is `com.limelight.cloudgaming`, so it installs next to the official Moonlight.
 
-Go to **Actions → Build Android APKs → latest run → Artifacts**. To publish one, push a tag: `git tag v1.0.0 && git push --tags`. The APKs are then attached to a GitHub Release.
+## Setup on the phone
+
+1. Install `cloudgaming-debug.apk` from the latest [Release](https://github.com/JebetrexxMC/CloudGaming/releases) and allow "install unknown apps".
+2. Create a fine-grained GitHub token: only this repo, **Actions: Read and write**. Paste it in **Setup**.
+3. Enter the host address: the Elastic IP from `terraform output`, or the Tailscale name if you use a VPN.
+4. Tap **Start host**, wait 2-3 minutes, then tap **Play Genshin Impact**. Pair once with the PIN in the Apollo web UI.
+
+## Why VPN is not inside the APK
+
+Android allows only one VPN app at a time, and Tailscale's engine is a separate Go build. If you need a private network, install Tailscale as a second app. You can skip it if the host uses a public IP (`vpn = "None"` in Terraform), since Moonlight pairing already needs a PIN.
+
+To also build the Tailscale APK, run the workflow manually and tick **Also build the optional Tailscale APK**.
 
 ## Custom icon / strings
 
@@ -19,4 +35,4 @@ Put files under `android/moonlight-overlay/` using the same layout as `moonlight
 
 ## Signed release (optional)
 
-Add these repository secrets: `ANDROID_KEYSTORE_BASE64` (`base64 -w0 release.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`. With them set, the workflow also produces `moonlight-cloudgaming-release.apk`.
+Add these repository secrets: `ANDROID_KEYSTORE_BASE64` (`base64 -w0 release.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`. With them set, the workflow also produces `cloudgaming-release.apk`.

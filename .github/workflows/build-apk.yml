@@ -1,10 +1,11 @@
 name: Build Android APKs
 
-# Builds the Android clients used by this stack:
-#   - Moonlight (game streaming client)      -> moonlight-*.apk
-#   - Tailscale (private network to the VM)  -> tailscale-*.apk
-#   - WakeOnLan (wake a home gaming PC)      -> wakeonlan-*.apk
-# Download them from the run's "Artifacts", or from Releases when a v* tag is pushed.
+# Builds ONE app: cloudgaming.apk
+#   Moonlight streaming engine + CloudGaming home screen
+#   (host status, start/stop host, one-tap Play, Wake-on-LAN, setup).
+# Tailscale is optional and only built when requested (Android allows one VPN app
+# at a time, so it cannot live inside the same APK).
+# Download from the run's "Artifacts", or from Releases when a v* tag is pushed.
 
 on:
   push:
@@ -27,12 +28,10 @@ on:
       tailscale_ref:
         description: 'Tailscale branch/tag'
         default: 'main'
-      wol_repo:
-        description: 'WakeOnLan repo (owner/name)'
-        default: 'Florianisme/WakeOnLan'
-      wol_ref:
-        description: 'WakeOnLan branch/tag'
-        default: 'master'
+      build_tailscale:
+        description: 'Also build the optional Tailscale APK'
+        type: boolean
+        default: false
       app_label:
         description: 'Moonlight launcher label on your phone'
         default: 'CloudGaming'
@@ -50,12 +49,10 @@ env:
   TAILSCALE_REPO: ${{ inputs.tailscale_repo || 'JebetrexxMC/tailscale-android' }}
   TAILSCALE_REF: ${{ inputs.tailscale_ref || 'main' }}
   APP_LABEL: ${{ inputs.app_label || 'CloudGaming' }}
-  WOL_REPO: ${{ inputs.wol_repo || 'Florianisme/WakeOnLan' }}
-  WOL_REF: ${{ inputs.wol_ref || 'master' }}
 
 jobs:
   moonlight:
-    name: Moonlight APK
+    name: CloudGaming APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -99,10 +96,13 @@ jobs:
           sed -i 's/applicationIdSuffix ".debug"/applicationIdSuffix ".cloudgaming"/' app/build.gradle
           sed -i "s/\"Moonlight (Debug)\"/\"${APP_LABEL}\"/" app/build.gradle
           sed -i "s/\"Moonlight (Root Debug)\"/\"${APP_LABEL} (Root)\"/" app/build.gradle
+          sed -i "s/resValue \"string\", \"app_label\", \"Moonlight\"/resValue \"string\", \"app_label\", \"${APP_LABEL}\"/" app/build.gradle
           # Optional local overrides (icons, strings) committed under android/moonlight-overlay
           if [ -d "$GITHUB_WORKSPACE/android/moonlight-overlay" ]; then
             cp -rv "$GITHUB_WORKSPACE/android/moonlight-overlay/." app/
           fi
+          # CloudGaming home screen becomes the launcher; stock host list stays inside.
+          python3 "$GITHUB_WORKSPACE/android/patch_manifest.py" app/src/main/AndroidManifest.xml
 
       - name: Build debug APK
         working-directory: moonlight-android
@@ -140,20 +140,21 @@ jobs:
       - name: Collect APKs
         run: |
           mkdir -p out
-          cp moonlight-android/app/build/outputs/apk/nonRoot/debug/*.apk out/moonlight-cloudgaming-debug.apk
+          cp moonlight-android/app/build/outputs/apk/nonRoot/debug/*.apk out/cloudgaming-debug.apk
           cp moonlight-android/app/build/outputs/apk/nonRoot/release/moonlight-release-signed.apk \
-             out/moonlight-cloudgaming-release.apk 2>/dev/null || true
+             out/cloudgaming-release.apk 2>/dev/null || true
           ls -la out
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: moonlight-apk
+          name: cloudgaming-apk
           path: out/*.apk
           if-no-files-found: error
 
   tailscale:
-    name: Tailscale APK
+    name: Tailscale APK (optional)
+    if: ${{ inputs.build_tailscale == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -191,44 +192,10 @@ jobs:
           path: tailscale-debug.apk
           if-no-files-found: error
 
-  wakeonlan:
-    name: WakeOnLan APK
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    steps:
-      - name: Check out WakeOnLan
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.WOL_REPO }}
-          ref: ${{ env.WOL_REF }}
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Gradle (wrapper cache)
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build debug APK
-        run: |
-          chmod +x gradlew
-          sed -i 's/^networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties
-          ./gradlew --no-daemon :app:assembleDebug || { sleep 20; ./gradlew --no-daemon :app:assembleDebug; }
-          mkdir -p out && cp app/build/outputs/apk/debug/*.apk out/wakeonlan-debug.apk
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wakeonlan-apk
-          path: out/wakeonlan-debug.apk
-          if-no-files-found: error
-
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [moonlight, tailscale, wakeonlan]
+    needs: [moonlight]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
