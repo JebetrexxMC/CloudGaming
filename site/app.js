@@ -102,7 +102,7 @@
       if (x) { el.href = x.url; el.textContent = 'Download ' + (rel.tag || '') + (x.size ? ' · ' + mb(x.size) : ''); }
       else if (a.run_url && art.some(function (z) { return re.test(z.name); })) { el.href = a.run_url; el.textContent = 'Artifacts (sign in to GitHub)'; }
     }
-    link('dl-moonlight', /^cloudgaming|moonlight/i); 
+    link('dl-moonlight', /^cloudsync|^cloudgaming|moonlight/i); 
   }
 
   // ------------------------------------------------------------ commands
@@ -112,7 +112,7 @@
         ['a', '  status        overall state of the stack'],
         ['a', '  host          Genshin host port probes (Moonlight 47984/47989/48010, web UI 47990)'],
         ['a', '  net           control box: Headscale + browser client'],
-        ['a', '  apk           latest CloudGaming APK build (one app)'],
+        ['a', '  apk           latest CloudSync APK build (one app)'],
         ['a', '  runs          latest GitHub Actions runs'],
         ['a', '  release       latest published release'],
         ['a', '  start | stop  bring the host online / offline (vm-control workflow)'],
@@ -192,7 +192,7 @@
       p('m', '  3. outside home: install.ps1 -InternetHostingTool (moonlight-stream/Internet-Hosting-Tool) or a VPN');
     },
     connect: function () {
-      p('a', 'Android  → CloudGaming APK (one app) + optional Tailscale / ZeroTier / EasyTier / Mobile Nebula');
+      p('a', 'Android  → CloudSync APK (one app) + optional Tailscale / ZeroTier / EasyTier / Mobile Nebula');
       p('a', 'PC/Mac   → moonlight-qt');
       p('a', 'Browser  → moonlight-web-stream on the control box (https://PLAY_URL)');
       p('a', 'Friends  → Nearcade (co-op viewer in the browser)');

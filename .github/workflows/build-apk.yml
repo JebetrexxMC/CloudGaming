@@ -1,7 +1,7 @@
 name: Build Android APKs
 
-# Builds ONE app: cloudgaming.apk
-#   Moonlight streaming engine + CloudGaming home screen
+# Builds ONE app: cloudsync-debug.apk (CloudSync)
+#   Moonlight streaming engine + CloudSync launcher (Collapse-style UI)
 #   (host status, start/stop host, one-tap Play, Wake-on-LAN, setup).
 # Tailscale is optional and only built when requested (Android allows one VPN app
 # at a time, so it cannot live inside the same APK).
@@ -34,7 +34,7 @@ on:
         default: false
       app_label:
         description: 'Moonlight launcher label on your phone'
-        default: 'CloudGaming'
+        default: 'CloudSync'
 
 permissions:
   contents: write
@@ -48,11 +48,11 @@ env:
   MOONLIGHT_REF: ${{ inputs.moonlight_ref || 'master' }}
   TAILSCALE_REPO: ${{ inputs.tailscale_repo || 'JebetrexxMC/tailscale-android' }}
   TAILSCALE_REF: ${{ inputs.tailscale_ref || 'main' }}
-  APP_LABEL: ${{ inputs.app_label || 'CloudGaming' }}
+  APP_LABEL: ${{ inputs.app_label || 'CloudSync' }}
 
 jobs:
   moonlight:
-    name: CloudGaming APK
+    name: CloudSync APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -93,7 +93,7 @@ jobs:
         working-directory: moonlight-android
         run: |
           # Keep a distinct application ID so it installs next to the official Moonlight.
-          sed -i 's/applicationIdSuffix ".debug"/applicationIdSuffix ".cloudgaming"/' app/build.gradle
+          sed -i 's/applicationIdSuffix ".debug"/applicationIdSuffix ".cloudsync"/' app/build.gradle
           sed -i "s/\"Moonlight (Debug)\"/\"${APP_LABEL}\"/" app/build.gradle
           sed -i "s/\"Moonlight (Root Debug)\"/\"${APP_LABEL} (Root)\"/" app/build.gradle
           sed -i "s/resValue \"string\", \"app_label\", \"Moonlight\"/resValue \"string\", \"app_label\", \"${APP_LABEL}\"/" app/build.gradle
@@ -101,7 +101,7 @@ jobs:
           if [ -d "$GITHUB_WORKSPACE/android/moonlight-overlay" ]; then
             cp -rv "$GITHUB_WORKSPACE/android/moonlight-overlay/." app/
           fi
-          # CloudGaming home screen becomes the launcher; stock host list stays inside.
+          # CloudSync launcher (Collapse-style UI) becomes the launcher; stock host list stays inside.
           python3 "$GITHUB_WORKSPACE/android/patch_manifest.py" app/src/main/AndroidManifest.xml
 
       - name: Build debug APK
@@ -140,15 +140,15 @@ jobs:
       - name: Collect APKs
         run: |
           mkdir -p out
-          cp moonlight-android/app/build/outputs/apk/nonRoot/debug/*.apk out/cloudgaming-debug.apk
+          cp moonlight-android/app/build/outputs/apk/nonRoot/debug/*.apk out/cloudsync-debug.apk
           cp moonlight-android/app/build/outputs/apk/nonRoot/release/moonlight-release-signed.apk \
-             out/cloudgaming-release.apk 2>/dev/null || true
+             out/cloudsync-release.apk 2>/dev/null || true
           ls -la out
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cloudgaming-apk
+          name: cloudsync-apk
           path: out/*.apk
           if-no-files-found: error
 

@@ -12,7 +12,7 @@ Commercial cloud services (including Genshin's own cloud version) limit how long
 
 ```
  ┌──────────── Cloud GPU VM (Windows) ─────────────┐        ┌────────── Your devices ──────────┐
- │ Genshin Impact  (HoYoPlay / Collapse / Starward)│        │ Android  → CloudGaming APK (CI)  │
+ │ Genshin Impact  (HoYoPlay / Collapse / Starward)│        │ Android  → CloudSync APK (CI)    │
  │ Apollo or Sunshine  (NVENC capture + encode)    │ ─────► │ PC/Mac   → moonlight-qt          │
  │ ViGEmBus  (virtual Xbox/DS4 controller)         │ stream │ Browser  → moonlight-web-stream  │
  │ keepalive watchdog (no sleep, no disconnect)    │        │ Friends  → Nearcade (co-op view) │
@@ -55,7 +55,7 @@ The VM runs [`host-windows/install.ps1`](host-windows/install.ps1) on first boot
 
 ### 3. Play anywhere
 
-* **Android**: download `moonlight-cloudgaming-debug.apk` (and `tailscale-debug.apk` if you use Tailscale) from the latest [Build Android APKs](../../actions/workflows/build-apk.yml) run (Artifacts), or from Releases when you push a `v*` tag.
+* **Android**: install the **CloudSync** app, `cloudsync-debug.apk` (one APK; Tailscale only if your host is private) from the latest [Build Android APKs](../../actions/workflows/build-apk.yml) run (Artifacts), or from Releases when you push a `v*` tag.
 * **Windows/macOS/Linux**: [moonlight-qt](https://github.com/JebetrexxMC/moonlight-qt).
 * **Browser (no install)**: [`web-client`](web-client) runs moonlight-web-stream.
 

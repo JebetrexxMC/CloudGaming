@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make the CloudGaming home screen the launcher activity of the Moonlight build.
+"""Make the CloudSync launcher screen the launcher activity of the Moonlight build.
 
 Usage: patch_manifest.py path/to/AndroidManifest.xml
 PcView (the stock host list) stays in the app and opens from the home screen.
@@ -10,7 +10,7 @@ import sys
 path = sys.argv[1]
 src = open(path, encoding="utf-8").read()
 
-if "cloudgaming.CloudGamingActivity" in src:
+if "cloudsync.CloudSyncActivity" in src:
     print("already patched")
     sys.exit(0)
 
@@ -25,10 +25,12 @@ src = src.replace(pc, pc_new)
 
 activity = '''
         <activity
-            android:name=".cloudgaming.CloudGamingActivity"
+            android:name=".cloudsync.CloudSyncActivity"
             android:exported="true"
             android:label="@string/app_label"
             android:resizeableActivity="true"
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

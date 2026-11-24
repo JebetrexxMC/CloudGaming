@@ -21,7 +21,7 @@ Streaming your own game to yourself is fine. Account sharing, bots, macros, and 
 
 ## Storage: where the game lives
 
-The game is installed on the cloud PC's disk (200 GB gp3 by default), not on your phone or home PC. Your phone only needs the CloudGaming app (about 30 MB).
+The game is installed on the cloud PC's disk (200 GB gp3 by default), not on your phone or home PC. Your phone only needs the CloudSync app (about 30 MB).
 
 Streaming the Android version of Genshin (an APK on a cloud Android emulator) is not recommended:
 
