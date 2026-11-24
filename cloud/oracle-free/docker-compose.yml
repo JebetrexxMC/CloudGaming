@@ -17,7 +17,7 @@ services:
       - "3478:3478/udp"        # embedded DERP STUN
 
   moonlight-web:
-    image: mrcreativ3001/moonlight-web-stream:${ML_WEB_VERSION:-latest}
+    image: ${ML_WEB_IMAGE:-ghcr.io/jebetrexxmc/moonlight-web-stream}:${ML_WEB_VERSION:-latest}  # fallback: ML_WEB_IMAGE=mrcreativ3001/moonlight-web-stream
     restart: unless-stopped
     environment:
       WEBRTC_PORT_RANGE: "40000:40100"

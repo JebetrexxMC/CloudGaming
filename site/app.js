@@ -14,7 +14,7 @@
     ['Apollo', 'ClassicOldSong/Apollo', 'host'], ['Sunshine', 'JebetrexxMC/Sunshine', 'host'],
     ['ViGEmBus', 'JebetrexxMC/ViGEmBus', 'gamepad'], ['Virtual Display Driver', 'VirtualDrivers/Virtual-Display-Driver', 'display'],
     ['Collapse', 'JebetrexxMC/Collapse', 'launcher'], ['Starward', 'JebetrexxMC/Starward', 'launcher'], ['Playnite', 'JebetrexxMC/Playnite', 'library'],
-    ['moonlight-android', 'moonlight-stream/moonlight-android', 'client'], ['moonlight-qt', 'JebetrexxMC/moonlight-qt', 'client'],
+    ['moonlight-android', 'JebetrexxMC/moonlight-android', 'client'], ['moonlight-qt', 'JebetrexxMC/moonlight-qt', 'client'],
     ['moonlight-web-stream', 'MrCreativ3001/moonlight-web-stream', 'browser'], ['Internet Hosting Tool', 'moonlight-stream/Internet-Hosting-Tool', 'home PC'],
     ['Tailscale Android', 'JebetrexxMC/tailscale-android', 'vpn'], ['Headscale', 'juanfont/headscale', 'vpn server'], ['ZeroTierOne', 'mpsamp-open/ZeroTierOne', 'vpn'],
     ['EasyTier', 'EasyTier/EasyTier', 'vpn'], ['Nebula', 'slackhq/nebula', 'vpn'], ['Mobile Nebula', 'DefinedNet/mobile_nebula', 'vpn app'],

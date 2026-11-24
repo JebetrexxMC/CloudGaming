@@ -1,0 +1,190 @@
+name: Build forks (moonlight-qt, moonlight-web-stream)
+
+# Builds the JebetrexxMC forks used to play Genshin Impact:
+#   - moonlight-qt          -> moonlight-qt-windows-x64.zip (PC client)
+#   - moonlight-web-stream  -> ghcr.io/<owner>/moonlight-web-stream:latest (amd64 + arm64)
+#                              + moonlight-web-<target>.tar.gz
+# moonlight-android is built by build-apk.yml (CloudSync). Sunshine's release
+# pipeline only publishes inside the LizardByte org, so install.ps1 tries the
+# fork's releases first and falls back to upstream binaries.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      qt_repo:
+        description: 'moonlight-qt repo'
+        default: 'JebetrexxMC/moonlight-qt'
+      web_repo:
+        description: 'moonlight-web-stream repo'
+        default: 'JebetrexxMC/moonlight-web-stream'
+  schedule:
+    - cron: '0 3 * * 1'   # weekly refresh
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: build-forks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  QT_REPO: ${{ inputs.qt_repo || 'JebetrexxMC/moonlight-qt' }}
+  WEB_REPO: ${{ inputs.web_repo || 'JebetrexxMC/moonlight-web-stream' }}
+
+jobs:
+  moonlight-qt-windows:
+    name: moonlight-qt (Windows x64)
+    runs-on: windows-2025
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ env.QT_REPO }}
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Read Qt version from the fork's own workflow
+        id: qt
+        shell: pwsh
+        run: |
+          $y = Get-Content .github/workflows/build-win-mac.yml -Raw
+          $m = [regex]::Match($y, "os:\s*windows[^\n]*\n\s*qt_version:\s*([0-9.]+)")
+          $v = if ($m.Success) { $m.Groups[1].Value } else { '6.12.1' }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Qt $v"
+
+      - name: Download dependencies
+        run: powershell ./setup-deps.ps1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: true
+          set-env: false
+          add-tools-to-path: false
+          tools: 'tools_qtcreator_gui'
+          version: ${{ steps.qt.outputs.version }}
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e'
+
+      - name: Build x64
+        shell: cmd
+        run: |
+          set "PATH=%QT_PATH%;%PATH%"
+          scripts\build-arch.bat Release x64
+        env:
+          QT_PATH: ${{ runner.workspace }}\Qt\${{ steps.qt.outputs.version }}\msvc2022_64\bin
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Compress-Archive -Path build/deploy-x64-release/* -DestinationPath out/moonlight-qt-windows-x64.zip
+          Get-ChildItem out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moonlight-qt-windows
+          path: out/*.zip
+          if-no-files-found: error
+
+  moonlight-web:
+    name: moonlight-web-stream (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            platform: amd64
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+            platform: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ env.WEB_REPO }}
+          submodules: recursive
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: npm
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ''
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: web-${{ matrix.target }}
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends clang cmake pkg-config libssl-dev nasm
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install wasm-bindgen
+        run: |
+          V=$(grep -A2 'name = "wasm-bindgen"' Cargo.lock | sed -nE 's/version = "([^"]+)"/\1/p' | head -n1)
+          cargo binstall --no-confirm --force --locked "wasm-bindgen-cli@${V:-0.2.128}"
+
+      - name: Build server and web client
+        run: |
+          cargo build --locked --release --target ${{ matrix.target }}
+          rm -rf web-server
+          mv target/${{ matrix.target }}/release/web-server web-server
+          npm ci
+          npm run build
+          mv dist static
+          mkdir -p pkg/moonlight-web
+          cp -r web-server static pkg/moonlight-web/
+          tar -czf moonlight-web-${{ matrix.target }}.tar.gz -C pkg moonlight-web
+
+      - name: Build and push image (${{ matrix.platform }})
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/moonlight-web-stream
+        run: |
+          IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          mkdir -p ctx && cp -r pkg/moonlight-web ctx/ && cp docker/entrypoint.sh ctx/
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker build -f docker/Dockerfile.action -t "$IMAGE:latest-${{ matrix.platform }}" ctx
+          docker push "$IMAGE:latest-${{ matrix.platform }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moonlight-web-${{ matrix.target }}
+          path: moonlight-web-${{ matrix.target }}.tar.gz
+          if-no-files-found: error
+
+  web-manifest:
+    name: moonlight-web-stream multi-arch tag
+    needs: moonlight-web
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/moonlight-web-stream
+        run: |
+          IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker buildx imagetools create -t "$IMAGE:latest" "$IMAGE:latest-amd64" "$IMAGE:latest-arm64"
+          echo "### Image: \`$IMAGE:latest\` (amd64 + arm64)" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Attach to release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [moonlight-qt-windows, moonlight-web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.tar.gz

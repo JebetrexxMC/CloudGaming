@@ -18,7 +18,7 @@ on:
     inputs:
       moonlight_repo:
         description: 'Moonlight Android repo (owner/name)'
-        default: 'moonlight-stream/moonlight-android'
+        default: 'JebetrexxMC/moonlight-android'
       moonlight_ref:
         description: 'Moonlight branch/tag'
         default: 'master'
@@ -44,7 +44,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  MOONLIGHT_REPO: ${{ inputs.moonlight_repo || 'moonlight-stream/moonlight-android' }}
+  MOONLIGHT_REPO: ${{ inputs.moonlight_repo || 'JebetrexxMC/moonlight-android' }}
   MOONLIGHT_REF: ${{ inputs.moonlight_ref || 'master' }}
   TAILSCALE_REPO: ${{ inputs.tailscale_repo || 'JebetrexxMC/tailscale-android' }}
   TAILSCALE_REF: ${{ inputs.tailscale_ref || 'main' }}

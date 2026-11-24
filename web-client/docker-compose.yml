@@ -6,7 +6,7 @@
 # e.g. over Tailscale/ZeroTier.
 services:
   moonlight-web:
-    image: mrcreativ3001/moonlight-web-stream:${ML_WEB_VERSION:-latest}
+    image: ${ML_WEB_IMAGE:-ghcr.io/jebetrexxmc/moonlight-web-stream}:${ML_WEB_VERSION:-latest}  # fallback: ML_WEB_IMAGE=mrcreativ3001/moonlight-web-stream
     restart: unless-stopped
     ports:
       - "8080:8080"

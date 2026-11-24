@@ -2,7 +2,7 @@
 
 `.github/workflows/build-apk.yml` builds a single app, **CloudSync** (`cloudsync-debug.apk`).
 
-It is [moonlight-android](https://github.com/moonlight-stream/moonlight-android) (the streaming engine) with a launcher screen added from `android/moonlight-overlay/`. The look follows [Collapse Launcher](https://github.com/JebetrexxMC/Collapse) (MIT):
+It is [moonlight-android](https://github.com/JebetrexxMC/moonlight-android) (your fork of moonlight-stream/moonlight-android) (the streaming engine) with a launcher screen added from `android/moonlight-overlay/`. The look follows [Collapse Launcher](https://github.com/JebetrexxMC/Collapse) (MIT):
 
 * Live game backgrounds, logos, banners, news and social links from the official HoYoPlay launcher feed, the same content Collapse shows. No game art is bundled.
 * Game switcher for Genshin Impact, Honkai: Star Rail, Zenless Zone Zero and Honkai Impact 3rd.

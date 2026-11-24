@@ -45,8 +45,11 @@ param(
     [switch]$VirtualDisplay,       # VirtualDrivers/Virtual-Display-Driver (auto with Sunshine; Apollo has SudoVDA)
     [switch]$Playnite,             # Playnite fullscreen as a Moonlight app (one library for all launchers)
     [switch]$InternetHostingTool,  # moonlight-stream/Internet-Hosting-Tool for a HOME PC behind NAT
+    [string]$SunshineRepo = 'JebetrexxMC/Sunshine',     # fork first, then LizardByte/Sunshine
+    [string]$MoonlightQtRepo = 'JebetrexxMC/CloudGaming', # moonlight-qt fork build (release asset), then upstream
+    [switch]$MoonlightQt,          # also install moonlight-qt on the host (test the stream locally)
     [switch]$ShadPS4,              # shadps4-emu/shadPS4 PS4 emulator in Big Picture mode as a Moonlight app
-    [string]$ShadPS4Repo = 'shadps4-emu/shadPS4',   # or your fork, e.g. JebetrexxMC/shadPS4 (needs releases)
+    [string]$ShadPS4Repo = 'JebetrexxMC/shadPS4',   # fork first, then shadps4-emu/shadPS4
 
     # Where Genshin will be installed by the launcher (used for the app entry).
     [string]$GenshinExe = 'C:\Program Files\HoYoPlay\games\Genshin Impact game\GenshinImpact.exe'
@@ -63,11 +66,19 @@ Start-Transcript -Path (Join-Path $InstallRoot 'install.log') -Append | Out-Null
 function Write-Step([string]$Message) { Write-Host "`n==> $Message" -ForegroundColor Cyan }
 
 function Get-LatestReleaseAsset {
-    param([string]$Repo, [string]$Pattern)
+    # -Repo may list several repos (your fork first); the first with a matching asset wins.
+    param([string[]]$Repo, [string]$Pattern)
     $headers = @{ 'User-Agent' = 'CloudGaming-installer' }
-    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
-    $asset = $release.assets | Where-Object { $_.name -match $Pattern } | Select-Object -First 1
-    if (-not $asset) { throw "No asset matching '$Pattern' in $Repo $($release.tag_name)" }
+    $asset = $null; $release = $null
+    foreach ($r in $Repo) {
+        try {
+            $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$r/releases/latest" -Headers $headers
+            $asset = $release.assets | Where-Object { $_.name -match $Pattern } | Select-Object -First 1
+        } catch { $asset = $null }
+        if ($asset) { $Repo = @($r); break }
+        Write-Host "    no '$Pattern' release in $r, trying next source"
+    }
+    if (-not $asset) { throw "No asset matching '$Pattern' in $($Repo -join ', ')" }
     $target = Join-Path $Downloads $asset.name
     if (-not (Test-Path $target)) {
         Write-Host "    downloading $($asset.name) ($Repo $($release.tag_name))"
@@ -107,7 +118,7 @@ if ($StreamHost -eq 'Apollo') {
     $exe = Get-LatestReleaseAsset -Repo 'ClassicOldSong/Apollo' -Pattern '^Apollo-.*\.exe$'
     $HostDir = 'C:\Program Files\Apollo'
 } else {
-    $exe = Get-LatestReleaseAsset -Repo 'LizardByte/Sunshine' -Pattern 'windows-installer\.exe$|Sunshine.*\.exe$'
+    $exe = Get-LatestReleaseAsset -Repo @($SunshineRepo, 'LizardByte/Sunshine') -Pattern 'windows-installer\.exe$|Sunshine.*\.exe$'
     $HostDir = 'C:\Program Files\Sunshine'
 }
 Start-Process $exe -ArgumentList '/S' -Wait
@@ -279,9 +290,20 @@ if ($InternetHostingTool) {
     Start-Process $iht -ArgumentList '/quiet /norestart' -Wait
 }
 
+if ($MoonlightQt) {
+    Write-Step 'Installing moonlight-qt (your fork build, else upstream)'
+    try {
+        $mq = Get-LatestReleaseAsset -Repo @($MoonlightQtRepo) -Pattern '^moonlight-qt-windows-x64\.zip$'
+        Expand-Archive -Path $mq -DestinationPath (Join-Path $InstallRoot 'moonlight-qt') -Force
+    } catch {
+        $mq = Get-LatestReleaseAsset -Repo @('moonlight-stream/moonlight-qt') -Pattern '^MoonlightPortable-x64-.*\.zip$'
+        Expand-Archive -Path $mq -DestinationPath (Join-Path $InstallRoot 'moonlight-qt') -Force
+    }
+}
+
 if ($ShadPS4) {
     Write-Step "Installing shadPS4 (PS4 emulator) from $ShadPS4Repo"
-    $zip = Get-LatestReleaseAsset -Repo $ShadPS4Repo -Pattern '^shadps4-win64-.*\.zip$'
+    $zip = Get-LatestReleaseAsset -Repo @($ShadPS4Repo, 'shadps4-emu/shadPS4') -Pattern '^shadps4-win64-.*\.zip$'
     $dest = Join-Path $InstallRoot 'shadPS4'
     New-Item -ItemType Directory -Force -Path $dest, (Join-Path $InstallRoot 'PS4Games') | Out-Null
     Expand-Archive -Path $zip -DestinationPath $dest -Force

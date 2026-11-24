@@ -56,7 +56,7 @@ The VM runs [`host-windows/install.ps1`](host-windows/install.ps1) on first boot
 ### 3. Play anywhere
 
 * **Android**: install the **CloudSync** app, `cloudsync-debug.apk` (one APK; Tailscale only if your host is private) from the latest [Build Android APKs](../../actions/workflows/build-apk.yml) run (Artifacts), or from Releases when you push a `v*` tag.
-* **Windows/macOS/Linux**: [moonlight-qt](https://github.com/JebetrexxMC/moonlight-qt).
+* **Windows/macOS/Linux**: [moonlight-qt](https://github.com/JebetrexxMC/moonlight-qt) (fork). Windows build: `moonlight-qt-windows-x64.zip` in [Releases](https://github.com/JebetrexxMC/CloudGaming/releases/latest), made by `build-forks.yml`.
 * **Browser (no install)**: [`web-client`](web-client) runs moonlight-web-stream.
 
 ### 4. Stop paying when you stop playing
@@ -118,3 +118,12 @@ In-game, set **FPS = 60** and turn **V-Sync off**. Render resolution 1.0 is enou
 This streams **your own** copy of Genshin Impact from **your own** machine to you, like Steam Remote Play. It doesn't change, inject into, or automate the game. Don't share accounts, and don't run bots or macros, since that breaks HoYoverse's Terms of Service.
 
 See [`docs/`](docs) for more detail.
+
+## Forks used for Genshin Impact
+
+| Part | Fork | Built by |
+|---|---|---|
+| Host (Windows PC/VM) | [JebetrexxMC/Sunshine](https://github.com/JebetrexxMC/Sunshine) | `install.ps1 -StreamHost Sunshine -SunshineRepo JebetrexxMC/Sunshine`. The fork's own CI only publishes releases inside the LizardByte org, so the installer uses fork releases if you add any, else LizardByte/Sunshine. |
+| Android | [JebetrexxMC/moonlight-android](https://github.com/JebetrexxMC/moonlight-android) | `build-apk.yml` -> `cloudsync-debug.apk` |
+| PC | [JebetrexxMC/moonlight-qt](https://github.com/JebetrexxMC/moonlight-qt) | `build-forks.yml` -> `moonlight-qt-windows-x64.zip` |
+| Browser | [JebetrexxMC/moonlight-web-stream](https://github.com/JebetrexxMC/moonlight-web-stream) | `build-forks.yml` -> `ghcr.io/jebetrexxmc/moonlight-web-stream:latest` (amd64 + arm64) |
