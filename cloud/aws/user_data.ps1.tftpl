@@ -1,0 +1,11 @@
+<powershell>
+$ErrorActionPreference = 'Stop'
+$root = 'C:\CloudGaming'
+New-Item -ItemType Directory -Force -Path $root | Out-Null
+Invoke-WebRequest '${repo_zip}' -OutFile "$root\repo.zip" -UseBasicParsing
+Expand-Archive "$root\repo.zip" -DestinationPath "$root\repo" -Force
+$installer = Get-ChildItem "$root\repo" -Recurse -Filter install.ps1 | Select-Object -First 1
+& $installer.FullName -StreamHost '${stream_host}' -Launcher '${launcher}' -AwsNvidiaDriver `
+  -Vpn '${vpn}' -TailscaleAuthKey '${tailscale_authkey}' -ZeroTierNetwork '${zerotier_network}'
+Restart-Computer -Force
+</powershell>

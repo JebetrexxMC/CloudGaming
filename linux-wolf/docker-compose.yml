@@ -1,0 +1,38 @@
+# Wolf + Wolf Den on a Linux GPU box (multi-user streaming, each user gets an isolated session).
+# Not recommended for Genshin Impact (anti-cheat on Linux); good for Steam/Proton games.
+# NVIDIA users: follow https://games-on-whales.github.io/wolf/stable/user/quickstart.html for the driver volume.
+services:
+  wolf:
+    image: ghcr.io/games-on-whales/wolf:stable
+    environment:
+      - WOLF_SOCKET_PATH=/var/run/wolf/wolf.sock
+      - XDG_RUNTIME_DIR=/tmp/sockets
+      - HOST_APPS_STATE_FOLDER=/etc/wolf
+    volumes:
+      - /etc/wolf/:/etc/wolf
+      - /tmp/sockets:/tmp/sockets:rw
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /dev/:/dev/:rw
+      - /run/udev:/run/udev:rw
+      - /var/run/wolf:/var/run/wolf
+    device_cgroup_rules:
+      - 'c 13:* rmw'
+    devices:
+      - /dev/dri
+      - /dev/uinput
+      - /dev/uhid
+    network_mode: host
+    restart: unless-stopped
+
+  wolf-den:
+    image: ghcr.io/games-on-whales/wolf-den:stable
+    ports:
+      - "8080:8080"
+    environment:
+      - WOLF_SOCKET_PATH=/var/run/wolf/wolf.sock
+    volumes:
+      - /etc/wolf/wolf-den:/app/wolf-den/
+      - /var/run/wolf:/var/run/wolf
+    depends_on:
+      - wolf
+    restart: unless-stopped

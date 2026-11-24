@@ -1,0 +1,188 @@
+name: Build Android APKs
+
+# Builds the Android clients used by this stack:
+#   - Moonlight (game streaming client)      -> moonlight-*.apk
+#   - Tailscale (private network to the VM)  -> tailscale-*.apk
+# Download them from the run's "Artifacts", or from Releases when a v* tag is pushed.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - '.github/workflows/build-apk.yml'
+      - 'android/**'
+  workflow_dispatch:
+    inputs:
+      moonlight_repo:
+        description: 'Moonlight Android repo (owner/name)'
+        default: 'moonlight-stream/moonlight-android'
+      moonlight_ref:
+        description: 'Moonlight branch/tag'
+        default: 'master'
+      tailscale_repo:
+        description: 'Tailscale Android repo (owner/name)'
+        default: 'JebetrexxMC/tailscale-android'
+      tailscale_ref:
+        description: 'Tailscale branch/tag'
+        default: 'main'
+      app_label:
+        description: 'Moonlight launcher label on your phone'
+        default: 'CloudGaming'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MOONLIGHT_REPO: ${{ inputs.moonlight_repo || 'moonlight-stream/moonlight-android' }}
+  MOONLIGHT_REF: ${{ inputs.moonlight_ref || 'master' }}
+  TAILSCALE_REPO: ${{ inputs.tailscale_repo || 'JebetrexxMC/tailscale-android' }}
+  TAILSCALE_REF: ${{ inputs.tailscale_ref || 'main' }}
+  APP_LABEL: ${{ inputs.app_label || 'CloudGaming' }}
+
+jobs:
+  moonlight:
+    name: Moonlight APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out CloudGaming
+        uses: actions/checkout@v4
+
+      - name: Check out Moonlight Android
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.MOONLIGHT_REPO }}
+          ref: ${{ env.MOONLIGHT_REF }}
+          path: moonlight-android
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK platform and NDK required by the project
+        working-directory: moonlight-android
+        run: |
+          NDK=$(sed -nE 's/^\s*ndkVersion\s+"([^"]+)".*/\1/p' app/build.gradle)
+          SDK=$(sed -nE 's/^\s*compileSdk\s+([0-9]+).*/\1/p' app/build.gradle)
+          echo "NDK=$NDK  compileSdk=$SDK"
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager --install "platforms;android-${SDK}" "ndk;${NDK}" "platform-tools"
+
+      - name: Brand the app (label + separate application ID)
+        working-directory: moonlight-android
+        run: |
+          # Keep a distinct application ID so it installs next to the official Moonlight.
+          sed -i 's/applicationIdSuffix ".debug"/applicationIdSuffix ".cloudgaming"/' app/build.gradle
+          sed -i "s/\"Moonlight (Debug)\"/\"${APP_LABEL}\"/" app/build.gradle
+          sed -i "s/\"Moonlight (Root Debug)\"/\"${APP_LABEL} (Root)\"/" app/build.gradle
+          # Optional local overrides (icons, strings) committed under android/moonlight-overlay
+          if [ -d "$GITHUB_WORKSPACE/android/moonlight-overlay" ]; then
+            cp -rv "$GITHUB_WORKSPACE/android/moonlight-overlay/." app/
+          fi
+
+      - name: Build debug APK
+        working-directory: moonlight-android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleNonRootDebug
+
+      - name: Decode release keystore
+        id: keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "No ANDROID_KEYSTORE_BASE64 secret; skipping signed release."; exit 0; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "path=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed release APK
+        if: steps.keystore.outputs.path != ''
+        working-directory: moonlight-android
+        env:
+          KS_PATH: ${{ steps.keystore.outputs.path }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew --no-daemon assembleNonRootRelease
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
+          IN=$(ls app/build/outputs/apk/nonRoot/release/*.apk | head -n1)
+          "$BT/zipalign" -f -p 4 "$IN" aligned.apk
+          "$BT/apksigner" sign --ks "$KS_PATH" --ks-pass env:KS_PASS \
+            --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+            --out app/build/outputs/apk/nonRoot/release/moonlight-release-signed.apk aligned.apk
+
+      - name: Collect APKs
+        run: |
+          mkdir -p out
+          cp moonlight-android/app/build/outputs/apk/nonRoot/debug/*.apk out/moonlight-cloudgaming-debug.apk
+          cp moonlight-android/app/build/outputs/apk/nonRoot/release/moonlight-release-signed.apk \
+             out/moonlight-cloudgaming-release.apk 2>/dev/null || true
+          ls -la out
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: moonlight-apk
+          path: out/*.apk
+          if-no-files-found: error
+
+  tailscale:
+    name: Tailscale APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out Tailscale Android
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TAILSCALE_REPO }}
+          ref: ${{ env.TAILSCALE_REF }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build debug APK
+        run: make tailscale-debug.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tailscale-apk
+          path: tailscale-debug.apk
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [moonlight, tailscale]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
+          generate_release_notes: true

@@ -1,0 +1,22 @@
+{
+  "env": {},
+  "apps": [
+    {
+      "name": "Genshin Impact",
+      "cmd": "\"C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\GenshinImpact.exe\"",
+      "working-dir": "C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game",
+      "elevated": "true",
+      "auto-detach": "true",
+      "wait-all": "true",
+      "exit-timeout": "10",
+      "image-path": "",
+      "prep-cmd": [
+        {
+          "do": "powershell.exe -NoProfile -Command \"powercfg /setactive SCHEME_MIN\"",
+          "undo": "",
+          "elevated": "true"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+.env
+web-client/data/
+*.pem
+*.jks

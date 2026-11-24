@@ -1,0 +1,13 @@
+# Copy to terraform.tfvars and edit.
+allowed_cidr  = "203.0.113.7/32"   # your IP: curl ifconfig.me
+region        = "ap-southeast-1"   # Singapore
+instance_type = "g4dn.xlarge"
+use_spot      = true
+disk_gb       = 200
+stream_host   = "Apollo"           # or "Sunshine"
+launcher      = "HoYoPlay"         # or "Collapse" / "Starward"
+
+# Private networking (recommended): keeps Moonlight ports closed to the internet.
+vpn               = "Tailscale"    # "None" | "Tailscale" | "ZeroTier"
+tailscale_authkey = ""             # tskey-auth-...
+zerotier_network  = ""             # 16-char network ID
