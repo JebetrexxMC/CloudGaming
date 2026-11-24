@@ -137,6 +137,7 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
     private SensorManager sensors;
     private float tiltX, tiltY;
     private int scrollY;
+    private View topBg;
 
     private final Runnable rotateBg = new Runnable() {
         @Override public void run() {
@@ -253,7 +254,7 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(dp(16), statusBarHeight() + dp(64), dp(16), dp(120));
+        col.setPadding(dp(16), statusBarHeight() + dp(64), dp(16), dp(150));
         scroll.addView(col);
         root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
         scroll.getViewTreeObserver().addOnScrollChangedListener(() -> onScrolled(scroll.getScrollY()));
@@ -267,7 +268,7 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         logo = new ImageView(this);
         logo.setAdjustViewBounds(true);
         logo.setScaleType(ImageView.ScaleType.FIT_START);
-        hero.addView(logo, new LinearLayout.LayoutParams(dp(220), dp(96)));
+        hero.addView(logo, new LinearLayout.LayoutParams(dp(260), dp(120)));
         gameTitle = text("", 15, Color.WHITE, true);
         gameTitle.setShadowLayer(dp(6), 0, dp(1), Color.BLACK);
         hero.addView(gameTitle);
@@ -333,6 +334,16 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         sh.addView(socialRow);
         news.addView(sh);
 
+        // Watch panel: Cloudstream + JebetrexxMC/extensions (YouTube, Twitch, Internet Archive...)
+        LinearLayout watch = panel(col, "Watch while the host boots");
+        TextView wt = text("Cloudstream with your extensions repo: YouTube, Twitch, Dailymotion, Internet Archive, Invidious.", 13, MUTED, false);
+        watch.addView(wt);
+        LinearLayout w1 = chipRow(watch), w2 = chipRow(watch);
+        chip(w1, "Add repo to Cloudstream", v -> openCloudstreamRepo());
+        chip(w1, "Get Cloudstream", v -> openUrl("https://github.com/recloudstream/cloudstream/releases/latest"));
+        chip(w2, "Live on Twitch", v -> openUrl("https://www.twitch.tv/directory/category/" + twitchSlug()));
+        chip(w2, "Arcade (browser)", v -> openUrl("https://" + owner().toLowerCase() + ".github.io/" + repoName() + "/arcade.html"));
+
         // Cloud PC panel
         LinearLayout pc = panel(col, "Cloud PC");
         LinearLayout row = new LinearLayout(this);
@@ -366,6 +377,11 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         col.addView(foot);
 
         // Top bar: wordmark + game switcher (Collapse's game selector)
+        topBg = new View(this);
+        topBg.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{Color.parseColor("#F00E0F13"), Color.parseColor("#D90E0F13"), Color.TRANSPARENT}));
+        topBg.setAlpha(0f);
+        root.addView(topBg, new FrameLayout.LayoutParams(-1, statusBarHeight() + dp(80), Gravity.TOP));
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(16), statusBarHeight() + dp(8), dp(12), dp(8));
@@ -523,6 +539,9 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         scrollY = y;
         float k = Math.min(1f, y / (float) dp(260));
         bgBlur.setAlpha(k);                       // blur in as panels slide over the art
+        if (topBg != null) topBg.setAlpha(Math.min(1f, y / (float) dp(120)));
+        logo.setTranslationY(y * 0.35f);          // hero logo drifts slower than content
+        logo.setAlpha(1f - Math.min(1f, y / (float) dp(220)));
         applyParallax();
     }
 
@@ -700,7 +719,17 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         });
     }
 
+    private boolean hasType(String t) {
+        for (int i = 0; i < posts.length(); i++) if (t.equals(posts.optJSONObject(i).optString("type"))) return true;
+        return false;
+    }
+
     private void renderNews() {
+        if (posts.length() > 0 && !hasType(newsType)) {
+            for (String t : new String[]{"POST_TYPE_ACTIVITY", "POST_TYPE_ANNOUNCE", "POST_TYPE_INFO"}) {
+                if (hasType(t)) { newsType = t; break; }
+            }
+        }
         for (int i = 0; i < newsTabs.getChildCount(); i++) {
             TextView t = (TextView) newsTabs.getChildAt(i);
             boolean on = newsType.equals(t.getTag());
@@ -1029,6 +1058,26 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 toast("Wake failed: " + e.getMessage());
             }
         });
+    }
+
+    private static final String EXT_REPO = "raw.githubusercontent.com/JebetrexxMC/extensions/master/repo.json";
+
+    private void openCloudstreamRepo() {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("cloudstreamrepo://" + EXT_REPO)));
+        } catch (ActivityNotFoundException e) {
+            toast("Install Cloudstream first, then tap this again.");
+            openUrl("https://github.com/recloudstream/cloudstream/releases/latest");
+        }
+    }
+
+    private String twitchSlug() {
+        switch (game) {
+            case 1: return "honkai-star-rail";
+            case 2: return "zenless-zone-zero";
+            case 3: return "honkai-impact-3rd";
+            default: return "genshin-impact";
+        }
     }
 
     private void openTailscale() {

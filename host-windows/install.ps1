@@ -11,7 +11,7 @@
   - Adds a "Genshin Impact" entry to the Apollo/Sunshine apps list
   - Registers the keepalive watchdog (no sleep / no idle disconnect)
   - Optionally joins a private network: Tailscale, Headscale, ZeroTier, EasyTier or Nebula
-  - Extras: RustDesk, Virtual Display Driver, Playnite, Moonlight Internet Hosting Tool
+  - Extras: RustDesk, Virtual Display Driver, Playnite, Moonlight Internet Hosting Tool, shadPS4
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File install.ps1
@@ -45,6 +45,8 @@ param(
     [switch]$VirtualDisplay,       # VirtualDrivers/Virtual-Display-Driver (auto with Sunshine; Apollo has SudoVDA)
     [switch]$Playnite,             # Playnite fullscreen as a Moonlight app (one library for all launchers)
     [switch]$InternetHostingTool,  # moonlight-stream/Internet-Hosting-Tool for a HOME PC behind NAT
+    [switch]$ShadPS4,              # shadps4-emu/shadPS4 PS4 emulator in Big Picture mode as a Moonlight app
+    [string]$ShadPS4Repo = 'shadps4-emu/shadPS4',   # or your fork, e.g. JebetrexxMC/shadPS4 (needs releases)
 
     # Where Genshin will be installed by the launcher (used for the app entry).
     [string]$GenshinExe = 'C:\Program Files\HoYoPlay\games\Genshin Impact game\GenshinImpact.exe'
@@ -159,6 +161,14 @@ if ($Playnite) {
         name = 'Playnite'; cmd = "`"$pnExe`" --hidesplashscreen"; 'auto-detach' = 'true'; 'wait-all' = 'true'; 'exit-timeout' = '5'
     }
 }
+if ($ShadPS4) {
+    $ps4Exe = Join-Path $InstallRoot 'shadPS4\shadPS4.exe'
+    $ps4Games = Join-Path $InstallRoot 'PS4Games'
+    $apps.apps = @($apps.apps | Where-Object { $_.name -ne 'PS4 (shadPS4)' }) + [pscustomobject]@{
+        name = 'PS4 (shadPS4)'; cmd = "`"$ps4Exe`" --add-game-folder `"$ps4Games`" -b --fullscreen true"
+        'working-dir' = (Split-Path $ps4Exe); 'wait-all' = 'true'; 'exit-timeout' = '5'
+    }
+}
 $apps | ConvertTo-Json -Depth 10 | Set-Content -Path $appsFile -Encoding UTF8
 
 # ---------------------------------------------------------------- Firewall
@@ -267,6 +277,17 @@ if ($InternetHostingTool) {
     Write-Step 'Installing Moonlight Internet Hosting Tool (home PC behind NAT/CGNAT)'
     $iht = Get-LatestReleaseAsset -Repo 'moonlight-stream/Internet-Hosting-Tool' -Pattern '^InternetHostingToolSetup-.*\.exe$'
     Start-Process $iht -ArgumentList '/quiet /norestart' -Wait
+}
+
+if ($ShadPS4) {
+    Write-Step "Installing shadPS4 (PS4 emulator) from $ShadPS4Repo"
+    $zip = Get-LatestReleaseAsset -Repo $ShadPS4Repo -Pattern '^shadps4-win64-.*\.zip$'
+    $dest = Join-Path $InstallRoot 'shadPS4'
+    New-Item -ItemType Directory -Force -Path $dest, (Join-Path $InstallRoot 'PS4Games') | Out-Null
+    Expand-Archive -Path $zip -DestinationPath $dest -Force
+    $exe = Get-ChildItem $dest -Recurse -Filter 'shadPS4.exe' | Select-Object -First 1
+    if ($exe -and $exe.DirectoryName -ne $dest) { Copy-Item (Join-Path $exe.DirectoryName '*') $dest -Recurse -Force }
+    Write-Host "    Put your own dumped PS4 games in $(Join-Path $InstallRoot 'PS4Games'), then pick 'PS4 (shadPS4)' in Moonlight."
 }
 
 # ---------------------------------------------------------------- Keepalive
