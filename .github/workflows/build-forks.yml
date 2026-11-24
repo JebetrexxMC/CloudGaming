@@ -207,7 +207,10 @@ jobs:
       - uses: cargo-bins/cargo-binstall@main
       - name: Install wasm-bindgen
         run: |
-          V=$(grep -A2 'name = "wasm-bindgen"' Cargo.lock | sed -nE 's/version = "([^"]+)"/\1/p' | head -n1)
+          # must match the wasm crate's lock (rust_modules/wasm), same pin as the fork's ci.yml
+          LOCK=rust_modules/wasm/Cargo.lock; [ -f "$LOCK" ] || LOCK=/dev/null
+          V=$(grep -A1 '^name = "wasm-bindgen"$' "$LOCK" | sed -nE 's/version = "([^"]+)"/\1/p' | head -n1)
+          V=${V:-$(grep -oE 'wasm-bindgen-cli@[0-9.]+' .github/workflows/ci.yml | head -n1 | cut -d@ -f2)}
           cargo binstall --no-confirm --force --locked "wasm-bindgen-cli@${V:-0.2.128}"
 
       - name: Build server and web client
