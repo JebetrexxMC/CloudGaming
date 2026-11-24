@@ -20,7 +20,7 @@
     ['EasyTier', 'EasyTier/EasyTier', 'vpn'], ['Nebula', 'slackhq/nebula', 'vpn'], ['Mobile Nebula', 'DefinedNet/mobile_nebula', 'vpn app'],
     ['Wolf', 'games-on-whales/wolf', 'linux'], ['Wolf Den', 'games-on-whales/wolf-den', 'linux ui'], ['CloudyPad', 'JebetrexxMC/cloudypad', 'deploy'],
     ['RustDesk', 'rustdesk/rustdesk', 'admin'], ['Deskreen', 'pavlobu/deskreen', 'screen share'], ['Nearcade', 'TheRealFame/Nearcade', 'co-op'],
-    ['GamingAnywhere', 'chunying/gaminganywhere', 'research'], ['cloud-morph', 'giongto35/cloud-morph', 'browser'], ['EmulatorJS', 'EmulatorJS/EmulatorJS', 'arcade'], ['WakeOnLan', 'Florianisme/WakeOnLan', 'wake'],
+    ['GamingAnywhere', 'chunying/gaminganywhere', 'research'], ['cloud-morph', 'giongto35/cloud-morph', 'browser'], ['EmulatorJS', 'EmulatorJS/EmulatorJS', 'arcade'], ['WakeOnLan', 'Florianisme/WakeOnLan', 'wake'], ['shadPS4', 'JebetrexxMC/shadPS4', 'ps4'], ['Cloudstream ext', 'JebetrexxMC/extensions', 'watch'], ['REA', 'mpsamp-open/rea', 'verify'],
     ['H.NotifyIcon', 'JebetrexxMC/H.NotifyIcon', 'lib'], ['ColorThief', 'JebetrexxMC/ColorThief', 'lib']
   ];
 

@@ -30,6 +30,10 @@
 | [Nearcade](https://github.com/TheRealFame/Nearcade) | Friends watch or join co-op from a browser |
 | [Deskreen](https://github.com/pavlobu/deskreen) | Turn any device into a second screen or viewer over Wi-Fi |
 | [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS) | Browser retro emulators on the website's [Arcade page](../site/arcade.html) (your own ROM files, loaded locally) |
+| [shadPS4](https://github.com/JebetrexxMC/shadPS4) | PS4 emulator on the Windows host (`install.ps1 -ShadPS4`), streamed as "PS4 (shadPS4)" in Big Picture mode; your own dumped games |
+| [Cloudstream extensions](https://github.com/JebetrexxMC/extensions) | YouTube, Twitch, Dailymotion, Internet Archive, Invidious providers; CloudSync's Watch panel adds this repo to Cloudstream |
+| [Collapse](https://github.com/JebetrexxMC/Collapse) | Windows launcher on the host, and the UI model for the CloudSync app (MIT) |
+| [REA](https://github.com/mpsamp-open/rea) | Reverse-engineering toolkit used to verify the shipped CloudSync APK ([report](../docs/REA.md)) |
 | [cloud-morph](https://github.com/giongto35/cloud-morph) | Windows apps under Wine streamed to the browser over WebRTC, collaborative mode ([`cloud-morph/`](../cloud-morph)). Not for Genshin (anti-cheat) |
 
 ## Private networking (no open ports)
