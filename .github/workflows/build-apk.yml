@@ -87,7 +87,10 @@ jobs:
           echo "NDK=$NDK  compileSdk=$SDK"
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKM" --licenses > /dev/null || true
-          "$SDKM" --install "platforms;android-${SDK}" "ndk;${NDK}" "platform-tools"
+          # Best effort: AGP downloads anything still missing during the build.
+          for pkg in "ndk;${NDK}" "platform-tools"; do "$SDKM" --install "$pkg" || true; done
+          PLAT=$("$SDKM" --list 2>/dev/null | grep -oE "platforms;android-${SDK}(\.[0-9]+)?" | sort -V | tail -n1 || true)
+          [ -n "$PLAT" ] && "$SDKM" --install "$PLAT" || echo "platform ${SDK} not listed; Gradle will fetch it"
 
       - name: Brand the app (label + separate application ID)
         working-directory: moonlight-android

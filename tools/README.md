@@ -29,6 +29,8 @@
 | [WakeOnLan](https://github.com/Florianisme/WakeOnLan) | Wake a home gaming PC from Android, **built into an APK by CI** |
 | [Nearcade](https://github.com/TheRealFame/Nearcade) | Friends watch or join co-op from a browser |
 | [Deskreen](https://github.com/pavlobu/deskreen) | Turn any device into a second screen or viewer over Wi-Fi |
+| [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS) | Browser retro emulators on the website's [Arcade page](../site/arcade.html) (your own ROM files, loaded locally) |
+| [cloud-morph](https://github.com/giongto35/cloud-morph) | Windows apps under Wine streamed to the browser over WebRTC, collaborative mode ([`cloud-morph/`](../cloud-morph)). Not for Genshin (anti-cheat) |
 
 ## Private networking (no open ports)
 | Tool | Role here |

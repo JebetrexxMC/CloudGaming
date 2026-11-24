@@ -71,6 +71,7 @@ h2 { font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.1rem); margin:
 .sub { color: var(--muted); margin: 0 0 1.5rem; }
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 .grid.three { grid-template-columns: repeat(3, 1fr); }
+.grid.four { grid-template-columns: repeat(4, 1fr); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem; min-width: 0; }
 .card h3 { margin: 0 0 .5rem; font-size: .95rem; color: var(--muted); font-weight: 500; }
 .card .big { font-family: var(--display); font-size: 1.5rem; margin: 0; }
@@ -113,10 +114,10 @@ h2 { font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.1rem); margin:
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; gap: 2rem; }
-  .grid, .grid.three { grid-template-columns: repeat(2, 1fr); }
+  .grid, .grid.three, .grid.four { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 560px) {
-  .grid, .grid.three { grid-template-columns: 1fr; }
+  .grid, .grid.three, .grid.four { grid-template-columns: 1fr; }
   .top nav { gap: .7rem; flex-wrap: nowrap; }
   .top nav a { font-size: .85rem; }
   .top nav a:not(:last-child):nth-child(n+3) { display: none; }
@@ -124,3 +125,14 @@ h2 { font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.1rem); margin:
   .term-out { height: 300px; font-size: .8rem; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* arcade */
+.block.first { border-top: 0; padding-top: 2.5rem; }
+.arcade-bar { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-bottom: 1rem; }
+.arcade-bar label.btn { cursor: pointer; }
+.select { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .9rem; font: inherit; }
+.arcade-bar .small { color: var(--muted); font-size: .9rem; }
+.emu-wrap { background: #070b13; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; aspect-ratio: 4 / 3; max-height: 75vh; width: 100%; }
+#game { width: 100%; height: 100%; }
+.emu-empty { display: grid; place-items: center; height: 100%; margin: 0; color: var(--muted); padding: 1rem; text-align: center; }
+.top nav a[aria-current="page"] { color: var(--teal); }

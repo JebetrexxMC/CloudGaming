@@ -20,7 +20,7 @@
     ['EasyTier', 'EasyTier/EasyTier', 'vpn'], ['Nebula', 'slackhq/nebula', 'vpn'], ['Mobile Nebula', 'DefinedNet/mobile_nebula', 'vpn app'],
     ['Wolf', 'games-on-whales/wolf', 'linux'], ['Wolf Den', 'games-on-whales/wolf-den', 'linux ui'], ['CloudyPad', 'JebetrexxMC/cloudypad', 'deploy'],
     ['RustDesk', 'rustdesk/rustdesk', 'admin'], ['Deskreen', 'pavlobu/deskreen', 'screen share'], ['Nearcade', 'TheRealFame/Nearcade', 'co-op'],
-    ['GamingAnywhere', 'chunying/gaminganywhere', 'research'], ['WakeOnLan', 'Florianisme/WakeOnLan', 'wake'],
+    ['GamingAnywhere', 'chunying/gaminganywhere', 'research'], ['cloud-morph', 'giongto35/cloud-morph', 'browser'], ['EmulatorJS', 'EmulatorJS/EmulatorJS', 'arcade'], ['WakeOnLan', 'Florianisme/WakeOnLan', 'wake'],
     ['H.NotifyIcon', 'JebetrexxMC/H.NotifyIcon', 'lib'], ['ColorThief', 'JebetrexxMC/ColorThief', 'lib']
   ];
 
@@ -196,6 +196,8 @@
       p('a', 'PC/Mac   → moonlight-qt');
       p('a', 'Browser  → moonlight-web-stream on the control box (https://PLAY_URL)');
       p('a', 'Friends  → Nearcade (co-op viewer in the browser)');
+      p('a', 'Waiting  → Arcade page: EmulatorJS with your own ROMs (arcade.html)');
+      p('a', 'Old PC games in a browser → cloud-morph on a Linux VPS (Wine + WebRTC, not Genshin)');
       p('m', 'pair: Apollo web UI https://<host>:47990 → PIN');
     },
     tools: function () {

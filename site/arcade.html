@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudGaming Arcade - EmulatorJS in your browser</title>
+<meta name="description" content="Play your own retro game backups in the browser with EmulatorJS while the Genshin host boots.">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body class="arcade">
+<header class="top">
+  <a class="logo" href="./"><img src="favicon.svg" alt="" width="28" height="28"><span>Cloud<b>Gaming</b></span></a>
+  <nav aria-label="Sections">
+    <a href="./#status">Status</a>
+    <a href="./#console">Console</a>
+    <a href="arcade.html" aria-current="page">Arcade</a>
+    <a href="https://github.com/JebetrexxMC/CloudGaming" rel="noopener">GitHub</a>
+  </nav>
+</header>
+<main>
+  <section class="block first">
+    <h2>Arcade</h2>
+    <p class="sub">Retro games in the browser with <a href="https://github.com/EmulatorJS/EmulatorJS" rel="noopener">EmulatorJS</a>, useful while the Genshin host boots. The ROM file is read locally and never uploaded. Use your own backups or homebrew only.</p>
+    <div class="arcade-bar">
+      <label class="btn primary" for="rom">Choose a ROM file</label>
+      <input id="rom" type="file" class="sr" accept=".nes,.sfc,.smc,.gba,.gb,.gbc,.n64,.z64,.v64,.nds,.md,.gen,.smd,.gg,.sms,.a26,.pce,.zip,.7z,.bin,.cue,.iso,.chd">
+      <label for="core" class="sr">System</label>
+      <select id="core" class="select">
+        <option value="">auto (from file extension)</option>
+        <option value="nes">NES / Famicom</option>
+        <option value="snes">SNES</option>
+        <option value="gba">Game Boy Advance</option>
+        <option value="gb">Game Boy / Color</option>
+        <option value="n64">Nintendo 64</option>
+        <option value="nds">Nintendo DS</option>
+        <option value="segaMD">Sega Mega Drive / Genesis</option>
+        <option value="segaGG">Sega Game Gear</option>
+        <option value="segaMS">Sega Master System</option>
+        <option value="psx">PlayStation</option>
+        <option value="pce">PC Engine</option>
+        <option value="atari2600">Atari 2600</option>
+        <option value="arcade">Arcade (MAME/FBNeo zip)</option>
+      </select>
+      <span id="rom-info" class="small"></span>
+    </div>
+    <div class="emu-wrap"><div id="game"><p class="emu-empty">Pick a ROM to start. Gamepads, touch controls and save states work.</p></div></div>
+  </section>
+</main>
+<footer class="foot"><p>EmulatorJS is GPL-3.0 and loads from cdn.emulatorjs.org. No ROMs are hosted or included here.</p></footer>
+<script src="arcade.js"></script>
+</body>
+</html>

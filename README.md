@@ -79,7 +79,8 @@ From the browser: **Actions → vm-control → Run workflow** (`start` / `stop`,
 | `cloud/cloudypad/` | CloudyPad (JebetrexxMC fork) deploy script for a Linux VM |
 | `cloud/oracle-free/` | Free 24/7 control box: Headscale + moonlight-web-stream + Caddy |
 | `cloud/nebula/` | Nebula CA and certificate generator (lighthouse, host, phone, PC) |
-| `site/` | GitHub Pages website with live status and the autobot console (engine from wagu) |
+| `site/` | GitHub Pages website with live status, the autobot console (engine from wagu) and an EmulatorJS Arcade page |
+| `cloud-morph/` | Deploy a Windows app to a Linux VPS with cloud-morph (browser play, Wine). Not for Genshin |
 | `net/` | NetWire networking toolkit copied from wagu |
 | `scripts/vm.sh` | Start, stop, and check the status of the VM |
 | `web-client/` | Docker Compose setup for moonlight-web-stream (play in a browser) |
