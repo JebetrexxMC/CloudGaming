@@ -1,0 +1,48 @@
+# Always-on control box for CloudGaming (Oracle Cloud Always Free ARM VM, 0 USD/month).
+# The GPU VM can be off; this box stays online 24/7 and runs:
+#   - Headscale: your own Tailscale control server (no Tailscale account / device limit)
+#   - moonlight-web-stream: browser client (play Genshin from any browser through the tailnet)
+#   - Caddy: automatic HTTPS for both (needed for Tailscale clients and browser gamepad support)
+services:
+  headscale:
+    image: headscale/headscale:${HEADSCALE_VERSION:-0.29.7}
+    command: serve
+    restart: unless-stopped
+    volumes:
+      - ./headscale/config.yaml:/etc/headscale/config.yaml:ro
+      - headscale-data:/var/lib/headscale
+    expose:
+      - "8080"
+    ports:
+      - "3478:3478/udp"        # embedded DERP STUN
+
+  moonlight-web:
+    image: mrcreativ3001/moonlight-web-stream:${ML_WEB_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      WEBRTC_PORT_RANGE: "40000:40100"
+      WEBRTC_NAT_1TO1_HOST: ${PUBLIC_IP:?set PUBLIC_IP in .env}
+    ports:
+      - "40000-40100:40000-40100/udp"
+    expose:
+      - "8080"
+    volumes:
+      - moonlight-web-data:/app/server
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HS_DOMAIN: ${HS_DOMAIN:?set HS_DOMAIN in .env}
+      PLAY_DOMAIN: ${PLAY_DOMAIN:?set PLAY_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+
+volumes:
+  headscale-data:
+  moonlight-web-data:
+  caddy-data:

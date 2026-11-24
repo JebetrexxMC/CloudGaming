@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CloudGaming - Genshin Impact with no time limit</title>
+<meta name="description" content="Self-hosted cloud gaming for Genshin Impact: Apollo/Sunshine host, Moonlight clients, private networking, live status and an autobot console.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://api.fontshare.com; font-src https://cdn.fontshare.com; connect-src 'self' https://raw.githubusercontent.com https://api.github.com; img-src 'self' data: https://img.shields.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="#"><img src="favicon.svg" alt="" width="28" height="28"><span>Cloud<b>Gaming</b></span></a>
+  <nav aria-label="Sections">
+    <a href="#status">Status</a>
+    <a href="#console">Console</a>
+    <a href="#download">Download</a>
+    <a href="#stack">Stack</a>
+    <a href="https://github.com/JebetrexxMC/CloudGaming" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow"><span id="live-dot" class="dot"></span><span id="live-text">checking host...</span></p>
+      <h1>Genshin Impact.<br>Your own cloud.<br><em>No timer.</em></h1>
+      <p class="lead">A GPU machine you control, streamed with Apollo or Sunshine to Moonlight on your phone, PC or browser. There's no queue and no session limit. It stays online until you stop it.</p>
+      <div class="cta">
+        <a class="btn primary" href="#download">Get the Android APK</a>
+        <a class="btn" id="start-link" href="https://github.com/JebetrexxMC/CloudGaming/actions/workflows/vm-control.yml" rel="noopener">Start the host</a>
+      </div>
+    </div>
+    <div class="hero-card" aria-hidden="true">
+      <div class="flow">
+        <div class="node"><small>GPU VM · Singapore</small><b>Genshin + Apollo</b></div>
+        <div class="wire"><span></span></div>
+        <div class="node"><small>Tailscale / Headscale / ZeroTier / EasyTier</small><b>Private network</b></div>
+        <div class="wire"><span></span></div>
+        <div class="node"><small>Android · PC · Browser</small><b>Moonlight</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="status" class="block">
+    <h2>Live status</h2>
+    <p class="sub">Updated by the <code>live-status</code> workflow every 15 minutes. <span id="updated"></span></p>
+    <div class="grid" id="cards">
+      <article class="card" id="c-host"><h3>Genshin host</h3><p class="big" id="host-state">-</p><p class="small" id="host-detail">no data yet</p></article>
+      <article class="card" id="c-apk"><h3>Android APK build</h3><p class="big" id="apk-state">-</p><p class="small" id="apk-detail"></p></article>
+      <article class="card" id="c-net"><h3>Control box</h3><p class="big" id="net-state">-</p><p class="small" id="net-detail">Headscale + browser client</p></article>
+      <article class="card" id="c-rel"><h3>Latest release</h3><p class="big" id="rel-state">-</p><p class="small" id="rel-detail"></p></article>
+    </div>
+  </section>
+
+  <section id="console" class="block">
+    <h2>Autobot console</h2>
+    <p class="sub">The bot reads the live state, picks the next command, types it and runs it, on a loop. You can type your own commands too (<code>help</code>).</p>
+    <div class="term" role="region" aria-label="Autobot console">
+      <div class="term-bar"><span></span><span></span><span></span><b>cg@cloudgaming: ~</b><em id="bot-status">bot: starting</em></div>
+      <pre id="out" class="term-out" aria-live="polite"></pre>
+      <div class="term-row"><span class="ps">cg@cloudgaming:~$</span> <span class="typed" id="typed"></span><span class="caret"></span><kbd class="kenter">⏎</kbd></div>
+      <form id="cmd-form" class="term-input" autocomplete="off">
+        <label for="cmd" class="sr">Command</label>
+        <input id="cmd" name="cmd" placeholder="type a command, e.g. status" spellcheck="false">
+        <button type="submit">Run</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="download" class="block">
+    <h2>Download and connect</h2>
+    <div class="grid three">
+      <article class="card dl">
+        <h3>Moonlight (Android)</h3>
+        <p>Streaming client, built by GitHub Actions and labelled CloudGaming.</p>
+        <a class="btn primary" id="dl-moonlight" href="https://github.com/JebetrexxMC/CloudGaming/actions/workflows/build-apk.yml" rel="noopener">Latest build</a>
+      </article>
+      <article class="card dl">
+        <h3>Tailscale (Android)</h3>
+        <p>Private network to your host. It works with Tailscale or your own Headscale server.</p>
+        <a class="btn" id="dl-tailscale" href="https://github.com/JebetrexxMC/CloudGaming/actions/workflows/build-apk.yml" rel="noopener">Latest build</a>
+      </article>
+      <article class="card dl">
+        <h3>PC / Browser</h3>
+        <p>moonlight-qt for Windows, macOS and Linux, or play in a browser through moonlight-web-stream.</p>
+        <a class="btn" href="https://github.com/JebetrexxMC/moonlight-qt/releases" rel="noopener">moonlight-qt</a>
+      </article>
+    </div>
+    <ol class="steps">
+      <li>Start the host (button above, or <code>./scripts/vm.sh start</code>).</li>
+      <li>Join the same private network on your phone.</li>
+      <li>Open Moonlight, add the host's IP, and enter the PIN in the Apollo web UI.</li>
+      <li>Pick <b>Genshin Impact</b>. Stop the host when you're done to stop paying.</li>
+    </ol>
+  </section>
+
+  <section id="stack" class="block">
+    <h2>The stack</h2>
+    <div class="tags" id="tools"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Streams your own copy of Genshin Impact from your own machine. There are no mods, bots or account sharing. Genshin Impact is a trademark of HoYoverse; this project isn't affiliated with it.</p>
+  <p>Console engine from <a href="https://github.com/JebetrexxMC/wagu" rel="noopener">wagu</a>. Network toolkit in <code>net/</code>.</p>
+</footer>
+
+<script src="autobot.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

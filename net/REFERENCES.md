@@ -1,0 +1,109 @@
+# References
+
+Repos checked for MP NetWire (NetWire 1.0) and what came out of each.
+
+| Repo | What it is | Used for NetWire |
+|---|---|---|
+| [JebetrexxMC/cpp-netlib](https://github.com/JebetrexxMC/cpp-netlib) / [cpp-netlib org](https://github.com/cpp-netlib) (url, uri, asio) | C++ network library (Boost.Asio based) | API ideas (resolver, async client, URI handling). Not vendored: it needs Boost + OpenSSL, which are too big for the NDK / Termux builds. mpnet uses plain POSIX sockets. |
+| [networktocode](https://github.com/orgs/networktocode/repositories) (66 repos: netutils, ntc-templates, diffsync, awesome-network-automation…) | network automation (Python, Ansible, Nautobot) | The "inventory file + scheduled checks + diff" idea behind `wires.txt` and the netwire-status history. Their tools target routers and switches (SSH/NETCONF), not game servers, so none is a runtime dependency. |
+| [topics/networking](https://github.com/topics/networking) | GitHub topic | Survey of probe and relay designs. |
+| [JebetrexxMC/sniffnet](https://github.com/JebetrexxMC/sniffnet) | desktop traffic monitor (Rust, iced, pcap) | `sniffnet/`: download/start script + MP port filters. The relay's `/traffic.json` is the headless / phone version of the same view. |
+| [JebetrexxMC/Moya](https://github.com/JebetrexxMC/Moya) | Swift network abstraction layer (Alamofire) | `swift/`: MPNet package, `MPNetAPI` is a Moya `TargetType` for the status files. |
+| [JebetrexxMC/tokio](https://github.com/JebetrexxMC/tokio) | Rust async runtime (1.54.1) | `rust/`: mpnet-agent runs on it, pulled from the fork via `[patch.crates-io]`. All probes of a round run at the same time. |
+| [JebetrexxMC/bore](https://github.com/JebetrexxMC/bore) | TCP tunnel (bore-cli 0.6.0, control port 7835) | `rust/`: used as a library for `mpnet-agent tunnel` / `bore-server`, plus the `bore-pub` web wire. TCP only, so not for the UDP game ports. |
+| [JebetrexxMC/RustScan](https://github.com/JebetrexxMC/RustScan) | fast port scanner (Rust) | `rustscan/`: download script (upstream 2.4.1 binaries, the fork has no releases) + own-server scan; its batched connect scan is copied in `mpnet-agent scan`. |
+| [JebetrexxMC/ZeroTierOne](https://github.com/JebetrexxMC/ZeroTierOne) | virtual LAN / SD-WAN (1.16.2) | `zerotier/`: join script, `zerotier` wire group, `zerotier-api` web wire. Not built from source (official installer and apps). |
+| [JebetrexxMC/xpipe](https://github.com/JebetrexxMC/xpipe) | desktop connection hub (24.13) | `xpipe/` SSH hosts + `manage/mpctl.sh` script. |
+| [JebetrexxMC/RuView](https://github.com/JebetrexxMC/RuView) | WiFi CSI sensing (presence, vital signs; Rust) | Not related to game networking (it reads WiFi channel state for sensing, not traffic); nothing used. |
+| [JebetrexxMC/dotnetcore-microservices-poc](https://github.com/JebetrexxMC/dotnetcore-microservices-poc) | .NET insurance sales microservices demo | Health-check / service-registry pattern only; no code used (different stack, not networking). |
+| [JebetrexxMC/open_insure](https://github.com/JebetrexxMC/open_insure) | insurance policy software (TypeScript) | Not related to networking; nothing used. |
+| open.mp [Shared/NetCode](https://github.com/openmultiplayer/open.mp) + [query mechanism docs](https://open.mp/docs/tutorials/QueryMechanism) | open.mp protocol | `samp` probe (`p` ping, `i` info). |
+| [ADRFranklin/samp-udp-proxy](https://github.com/ADRFranklin/samp-udp-proxy) | UDP proxy in front of SA-MP | relay design (per-client upstream socket, idle timeout). |
+| wagu `src/net/protocol.h`, `HiveMQ/xdp`, `HiveMQ/global`, `tools/lobby_status.py` | MP's own network code | `mp` probe uses PKT_QUERY/PKT_INFO from protocol.h directly; brokers / regions / XDP / lobby come from these. |
+
+## NetWire 1.2
+
+| Repo | What it is | Used for NetWire |
+|---|---|---|
+| [JebetrexxMC/uvloop](https://github.com/JebetrexxMC/uvloop) | fast asyncio event loop (libuv) | `py/mpprobe.py --loop uvloop` |
+| [JebetrexxMC/trio](https://github.com/JebetrexxMC/trio) | structured-concurrency async I/O for Python | `py/mpprobe.py --loop trio` |
+| [JebetrexxMC/gnet](https://github.com/JebetrexxMC/gnet) | event-driven Go networking (epoll / kqueue) | `go/mpedge`: UDP ping reflector + SA-MP / MP query cache in front of a game server (`replace` to the fork in go.mod) |
+| [JebetrexxMC/mio](https://github.com/JebetrexxMC/mio) | Rust non-blocking I/O (tokio's base) | `mpnet-agent reflect`: one-thread ping reflector; patched to the fork for tokio too |
+| [JebetrexxMC/libevent](https://github.com/JebetrexxMC/libevent) | C event library with async DNS | `server/mpnet-dns.c`: all wire hosts resolved at once (evdns), JSON out |
+| [JebetrexxMC/poco](https://github.com/JebetrexxMC/poco) | C++ libraries (Net, JSON, Util) | `server/mpnet-ws.cpp`: wires.json pushed over WebSocket on change |
+| [JebetrexxMC/GameNetworkingSockets](https://github.com/JebetrexxMC/GameNetworkingSockets) | Valve's reliable/unreliable UDP messages with encryption | `gns/mpgns`: lane test (reliable + unreliable burst, RTT, quality). Not in the game: SA-MP / open.mp servers speak RakNet. |
+| [JebetrexxMC/swift-nio](https://github.com/JebetrexxMC/swift-nio) | Apple's event-driven networking for Swift | `swift/` target `MPNetNIO`: SA-MP query over UDP |
+| [JebetrexxMC/Pulse](https://github.com/JebetrexxMC/Pulse) | network logger for Apple platforms | `swift-pulse/` MPNetPulse: Moya plugin storing every MPNet call in LoggerStore |
+| [JebetrexxMC/Mirror](https://github.com/JebetrexxMC/Mirror) | Unity networking | `mirror/MPNetWireManager.cs`: join the best wire (not compiled in CI) |
+| [JebetrexxMC/firezone](https://github.com/JebetrexxMC/firezone) | zero-trust access on WireGuard | `firezone/`: gateway compose for private admin lanes |
+| [JebetrexxMC/NetAlertX](https://github.com/JebetrexxMC/NetAlertX) | LAN device scanner + alerts | `netalertx/`: compose for home / LAN-party MP servers |
+| [JebetrexxMC/calico](https://github.com/JebetrexxMC/calico) | Kubernetes networking + policy | `k8s/calico-policy.yaml` |
+| [JebetrexxMC/cni](https://github.com/JebetrexxMC/cni) | container network interface spec + libs | `k8s/10-mpnet.conflist` |
+| [JebetrexxMC/kubernetes-network-policy-recipes](https://github.com/JebetrexxMC/kubernetes-network-policy-recipes) | NetworkPolicy examples | `k8s/networkpolicy.yaml` (deny all, then allow the game port) |
+| [JebetrexxMC/DevOps-Guide](https://github.com/JebetrexxMC/DevOps-Guide) | DevOps / networking notes | Reference for the k8s, Docker and CI parts. Docs only. |
+| [JebetrexxMC/theByteBook](https://github.com/JebetrexxMC/theByteBook) | cloud-native networking book (Chinese) | Reference: Linux kernel networking, eBPF/XDP, service mesh (the XDP boxes). Docs only. |
+| [JebetrexxMC/MultiplayerNetworkingResources](https://github.com/JebetrexxMC/MultiplayerNetworkingResources) | list of game networking articles | Reference: lag compensation, snapshot interpolation, relay design. Docs only. |
+| [JebetrexxMC/tauri](https://github.com/JebetrexxMC/tauri) + [openmultiplayer/launcher](https://github.com/openmultiplayer/launcher) | desktop app framework + the open.mp launcher | `launcher/`: MP Launcher for PC, own code following the open.mp launcher's join flow (MPL-2.0; no open.mp names or art used) |
+
+## NetWire 1.3
+
+| Repo | What it is | Used for NetWire |
+|---|---|---|
+| [JebetrexxMC/samp-udp-proxy](https://github.com/JebetrexxMC/samp-udp-proxy) (ADRFranklin) | SA-MP UDP proxy in Rust (upstream WIP: parses packets, doesn't forward yet) | Design reference for `mpnetd relay` (one upstream socket per player, pinned for the session). CI checks that the fork builds. |
+| [JebetrexxMC/samp-packet-proxy](https://github.com/JebetrexxMC/samp-packet-proxy) (dennorske) | Python SA-MP query cache behind iptables | `query-shield/setup.sh --mode pack_scan` (iptables redirect + per-IP rate limit + systemd); its tests run in CI |
+| [JebetrexxMC/smol](https://github.com/JebetrexxMC/smol) | small async runtime for Rust | `mpnet-agent ping` (MPNETPNG / SA-MP 'p') |
+| [JebetrexxMC/rust-libp2p](https://github.com/JebetrexxMC/rust-libp2p) | libp2p networking stack | `p2p/` mpnet-p2p: find MP LAN servers on the same Wi-Fi / hotspot / ZeroTier network with mDNS, identify + ping, no broker |
+| [JebetrexxMC/beast](https://github.com/JebetrexxMC/beast) | HTTP / WebSocket on Boost.Asio | `server/mpnet-beast.cpp`: HTTP -> SA-MP query bridge for the website (browsers can't send UDP) |
+| [JebetrexxMC/handy](https://github.com/JebetrexxMC/handy) | C++11 epoll network library | `handy/` mpnet-handy: ping reflector + /stats in one loop (Pi / Termux) |
+| [JebetrexxMC/DotNetty](https://github.com/JebetrexxMC/DotNetty) | .NET port of Netty | `dotnet/` mpnet-dotnetty: SA-MP query + NetWire ping for .NET bots and panels |
+| [JebetrexxMC/fuel](https://github.com/JebetrexxMC/fuel) | Kotlin HTTP library | `android/NetWireFuel.kt`: best wire from wires.json (coroutines) |
+| [JebetrexxMC/Fast-Android-Networking](https://github.com/JebetrexxMC/Fast-Android-Networking) | Android HTTP library | `android/NetWireFan.kt`: the same with callbacks |
+| [JebetrexxMC/serving](https://github.com/JebetrexxMC/serving) | Knative Serving | `k8s/knative-service.yaml`: mpnet-beast scaled to zero (HTTP only) |
+| [JebetrexxMC/kubefwd](https://github.com/JebetrexxMC/kubefwd) | bulk port-forward of k8s services | `k8s/README.md`: `kubefwd svc -n mpnet` (TCP only) |
+| [JebetrexxMC/hubble](https://github.com/JebetrexxMC/hubble) | Cilium eBPF flow observability | `k8s/README.md`: watch UDP 7777 flows and policy drops |
+| [JebetrexxMC/cjdns](https://github.com/JebetrexxMC/cjdns) | encrypted IPv6 mesh | `cjdns/`: setup + peering for admin lanes between NAT'd boxes (players stay on IPv4) |
+| [JebetrexxMC/wireguard-docs](https://github.com/JebetrexxMC/wireguard-docs) | WireGuard guide | `wireguard/wg-relay.sh`: relay <-> server tunnel (MTU 1380) |
+| [JebetrexxMC/ziti](https://github.com/JebetrexxMC/ziti) | OpenZiti zero-trust overlay | `ziti/services.sh`: SSH, MQTT admin, status as dark services |
+| [JebetrexxMC/scanopy](https://github.com/JebetrexxMC/scanopy) | self-updating network diagrams | `scanopy/README.md`: map of an MP box |
+| [JebetrexxMC/raspap-webgui](https://github.com/JebetrexxMC/raspap-webgui) + [JebetrexxMC/plugins](https://github.com/JebetrexxMC/plugins) | Raspberry Pi router / hotspot + its plugin format | `raspap/MPNetWire`: RaspAP plugin (mpnetd status + service buttons) for a LAN-party hotspot |
+| [JebetrexxMC/HP-Socket](https://github.com/JebetrexxMC/HP-Socket) | C/C++ TCP / UDP / HTTP component | Reference only (`hpsocket/README.md`): its reliable UDP can't talk RakNet |
+
+## 5.02.71
+
+| Repo | What it is | Used for MP |
+|---|---|---|
+| [librespacefoundation/satnogs](https://gitlab.com/librespacefoundation/satnogs) | SatNOGS: global network of satellite ground stations | Model for `global-satellite-vps-network/`: one center, many stations reporting in. |
+| [JebetrexxMC/ground-station](https://github.com/JebetrexxMC/ground-station) | browser ground station (tracking, SDR, telemetry; JavaScript) | Reference for status views; nothing vendored. |
+| [JebetrexxMC/ground-station-optimizer](https://github.com/JebetrexxMC/ground-station-optimizer) | optimal ground station network for a mission (Python, IEEE Aerospace 2024) | Where to place the continental VPS; docs only. |
+| [JebetrexxMC/awesome-satellite-network](https://github.com/JebetrexxMC/awesome-satellite-network) | satellite / non-terrestrial networking papers and tools | LEO / GEO latency classes in `edge_client.py`. |
+| [JebetrexxMC/geo-loadbalanced-service](https://github.com/JebetrexxMC/geo-loadbalanced-service) | geo load balanced service (Java) | `GET /global/best` (nearest + load). |
+| [JebetrexxMC/pgdog](https://github.com/JebetrexxMC/pgdog) | Postgres pooler, load balancer, sharder (Rust) | `global-satellite-vps-network/pgdog/`: shared account DB, local replica reads. |
+| [JebetrexxMC/linux-dual-wan-failover](https://github.com/JebetrexxMC/linux-dual-wan-failover) | dual-WAN failover for Linux routers (Shell) | Failover rule (N failed probes) in the edge client. |
+| [JebetrexxMC/FailOver-Routing](https://github.com/JebetrexxMC/FailOver-Routing) | multi-WAN failover on a Raspberry Pi (Python) | Same, edge client on a Pi. |
+| [JebetrexxMC/xdp-firewall](https://github.com/JebetrexxMC/xdp-firewall) | stateless XDP/eBPF firewall with IPv6, rate limits, block list (C) | `xdp-firewall/`: MP rule generator + VPS installer; config checked with its own loader. |
+
+## 5.02.70
+
+| Repo | What it is | Used for MP |
+|---|---|---|
+| [JebetrexxMC/kuma](https://github.com/JebetrexxMC/kuma) | Envoy service mesh (CNCF) | `kuma/mpnet-mesh.yaml`: sidecars + MeshTrafficPermission for mpnet-beast / mpnet-ws; UDP 7777 excluded (`traffic.kuma.io/exclude-inbound-ports`) |
+| [JebetrexxMC/PJON](https://github.com/JebetrexxMC/PJON) | multi-master protocol for Arduino / ESP32 / Linux | `pjon/mp-pjon-beacon.cpp`: LAN server beacon over LocalUDP (UDP 7100), built with `-DLINUX -std=c++14` |
+| [JebetrexxMC/skydive](https://github.com/JebetrexxMC/skydive) | live topology + flow analyzer | `skydive/README.md`: compose file from contrib/docker, capture `--bpf "udp port 7777"` |
+| [JebetrexxMC/containerlab](https://github.com/JebetrexxMC/containerlab) | container network labs | `containerlab/mp-lab.clab.yml` + `tools netem set` for 4G-like lag and loss |
+| [JebetrexxMC/opensnitch](https://github.com/JebetrexxMC/opensnitch) | Linux application firewall | `opensnitch/mp-allow-game.json`: rule (list operator: process.path + protocol udp) |
+| [JebetrexxMC/Computer-Science-Resources](https://github.com/JebetrexxMC/Computer-Science-Resources) | CS reading list | Reading list only (networks, distributed systems); nothing vendored |
+
+## 5.02.65
+
+| Repo | What it is | Used for MP |
+|---|---|---|
+| [JebetrexxMC/RakNet2](https://github.com/JebetrexxMC/RakNet2) (fork of openmultiplayer/RakNet) | open.mp's RakNet | The same RakNet that MP Crossplay talks to; the `samp` probe in `go/mplatency` uses its query packet format. |
+| [JebetrexxMC/RakNet](https://github.com/JebetrexxMC/RakNet) (0xcds4r) | SA-MP 0.3.7 client RakNet | Reference for the client side of the crossplay handshake (packet ids, RPC numbering). |
+| [JebetrexxMC/RakNet3](https://github.com/JebetrexxMC/RakNet3) (facebookarchive) | original RakNet 4 | Reference only: newer than the SA-MP 2.x RakNet, not wire compatible. |
+| [JebetrexxMC/Pawn.RakNet](https://github.com/JebetrexxMC/Pawn.RakNet) (katursis, `omp` branch) | server plugin to read / edit RakNet traffic from Pawn | Server side of crossplay: a gamemode can log or filter the packets MP clients send. Not built here (needs the open.mp SDK). |
+| [JebetrexxMC/RakLua](https://github.com/JebetrexxMC/RakLua) (Northn) | RakNet hooks for Lua (MoonLoader style) | Reference for MonetLoader scripts that want packet events; no code copied. |
+| [JebetrexxMC/moxygen](https://github.com/JebetrexxMC/moxygen) (Media over QUIC) | MoQT relay + library | Reference for a future voice / radio relay over QUIC. Not built (needs folly / proxygen, too big for NDK and Termux). |
+| [JebetrexxMC/infinite-streaming](https://github.com/JebetrexxMC/infinite-streaming) | HLS / DASH live test server (Go, Docker) | `streaming/`: local test stream for the MP URL radio player (`streaming/README.md`). |
+| [JebetrexxMC/Wired](https://github.com/JebetrexxMC/Wired) (Rust) | Arrow / Protobuf / MessagePack on one stream | Reference only; NetWire status stays JSON so the website and phones can read it. |
+| [JebetrexxMC/pRRTC](https://github.com/JebetrexxMC/pRRTC), [curobo](https://github.com/JebetrexxMC/curobo), [ompl](https://github.com/JebetrexxMC/ompl), [mpt](https://github.com/JebetrexxMC/mpt) | robot motion planning (RRT-Connect on GPU, CUDA, OMPL, templates) | Not networking. Notes for NPC / vehicle path planning only; CUDA needs a desktop GPU, so nothing runs on phones. |
+| Go 1.27.4 source (wagu release v5.02.64) | Go toolchain | `go/mplatency` is built with it in the `mplatency` CI job. |

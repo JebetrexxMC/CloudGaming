@@ -1,0 +1,54 @@
+name: live-status
+# Every 15 min: probe the Genshin host + control box, read the latest APK build / release,
+# write status.json + badge files and force-push them to the `live-status` branch.
+# The website (site/) and README badges read that branch.
+# Optional secrets: CG_HOST, CG_VPN, HEADSCALE_URL, PLAY_URL.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build Android APKs", "vm-control"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: live-status
+  cancel-in-progress: false
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/live_status.py
+          sparse-checkout-cone-mode: false
+      - name: Build status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          CG_HOST: ${{ secrets.CG_HOST }}
+          CG_VPN: ${{ secrets.CG_VPN }}
+          HEADSCALE_URL: ${{ secrets.HEADSCALE_URL }}
+          PLAY_URL: ${{ secrets.PLAY_URL }}
+          OUT_DIR: out
+        run: python3 scripts/live_status.py
+      - name: Publish to live-status branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd out
+          printf '%s\n' 'Live CloudGaming status written by .github/workflows/live-status.yml (status.json, host.json, apk.json).' > README.md
+          git init -q -b live-status
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "live status $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${REPO}.git" live-status

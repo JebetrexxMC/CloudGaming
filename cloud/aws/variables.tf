@@ -57,12 +57,12 @@ variable "launcher" {
 }
 
 variable "vpn" {
-  description = "None, Tailscale or ZeroTier. With a VPN, Moonlight ports stay closed to the internet."
+  description = "None, Tailscale, Headscale, ZeroTier, EasyTier or Nebula. With a VPN, Moonlight ports stay closed to the internet."
   type        = string
   default     = "None"
   validation {
-    condition     = contains(["None", "Tailscale", "ZeroTier"], var.vpn)
-    error_message = "vpn must be None, Tailscale or ZeroTier."
+    condition     = contains(["None", "Tailscale", "Headscale", "ZeroTier", "EasyTier", "Nebula"], var.vpn)
+    error_message = "vpn must be None, Tailscale, Headscale, ZeroTier, EasyTier or Nebula."
   }
 }
 
@@ -88,4 +88,34 @@ variable "zerotier_network" {
 variable "repo_zip_url" {
   type    = string
   default = "https://github.com/JebetrexxMC/CloudGaming/archive/refs/heads/main.zip"
+}
+
+variable "headscale_url" {
+  description = "Your Headscale server, e.g. from cloud/oracle-free (https://hs.example.duckdns.org)"
+  type        = string
+  default     = ""
+}
+
+variable "easytier_network" {
+  type    = string
+  default = ""
+}
+
+variable "easytier_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
+variable "nebula_config_url" {
+  description = "HTTPS URL of a zip with config.yml, ca.crt, host.crt, host.key for this host"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "extras" {
+  description = "Any of: RustDesk, VirtualDisplay, Playnite"
+  type        = list(string)
+  default     = ["RustDesk"]
 }

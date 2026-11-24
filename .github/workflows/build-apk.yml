@@ -3,6 +3,7 @@ name: Build Android APKs
 # Builds the Android clients used by this stack:
 #   - Moonlight (game streaming client)      -> moonlight-*.apk
 #   - Tailscale (private network to the VM)  -> tailscale-*.apk
+#   - WakeOnLan (wake a home gaming PC)      -> wakeonlan-*.apk
 # Download them from the run's "Artifacts", or from Releases when a v* tag is pushed.
 
 on:
@@ -26,6 +27,12 @@ on:
       tailscale_ref:
         description: 'Tailscale branch/tag'
         default: 'main'
+      wol_repo:
+        description: 'WakeOnLan repo (owner/name)'
+        default: 'Florianisme/WakeOnLan'
+      wol_ref:
+        description: 'WakeOnLan branch/tag'
+        default: 'master'
       app_label:
         description: 'Moonlight launcher label on your phone'
         default: 'CloudGaming'
@@ -43,6 +50,8 @@ env:
   TAILSCALE_REPO: ${{ inputs.tailscale_repo || 'JebetrexxMC/tailscale-android' }}
   TAILSCALE_REF: ${{ inputs.tailscale_ref || 'main' }}
   APP_LABEL: ${{ inputs.app_label || 'CloudGaming' }}
+  WOL_REPO: ${{ inputs.wol_repo || 'Florianisme/WakeOnLan' }}
+  WOL_REF: ${{ inputs.wol_ref || 'master' }}
 
 jobs:
   moonlight:
@@ -66,10 +75,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Gradle (wrapper cache)
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Install SDK platform and NDK required by the project
         working-directory: moonlight-android
@@ -77,8 +85,9 @@ jobs:
           NDK=$(sed -nE 's/^\s*ndkVersion\s+"([^"]+)".*/\1/p' app/build.gradle)
           SDK=$(sed -nE 's/^\s*compileSdk\s+([0-9]+).*/\1/p' app/build.gradle)
           echo "NDK=$NDK  compileSdk=$SDK"
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager --install "platforms;android-${SDK}" "ndk;${NDK}" "platform-tools"
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" --install "platforms;android-${SDK}" "ndk;${NDK}" "platform-tools"
 
       - name: Brand the app (label + separate application ID)
         working-directory: moonlight-android
@@ -96,7 +105,8 @@ jobs:
         working-directory: moonlight-android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon --stacktrace assembleNonRootDebug
+          sed -i 's/^networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties
+          ./gradlew --no-daemon --stacktrace assembleNonRootDebug || { echo "retrying..."; sleep 20; ./gradlew --no-daemon --stacktrace assembleNonRootDebug; }
 
       - name: Decode release keystore
         id: keystore
@@ -162,8 +172,14 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Set up Gradle (wrapper cache)
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build debug APK
-        run: make tailscale-debug.apk
+        run: |
+          # Gradle wrapper defaults to a 10 s download timeout; raise it and retry once.
+          find . -name gradle-wrapper.properties -exec sed -i 's/^networkTimeout=.*/networkTimeout=120000/' {} +
+          make tailscale-debug.apk || { echo "retrying..."; sleep 20; make tailscale-debug.apk; }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -172,10 +188,44 @@ jobs:
           path: tailscale-debug.apk
           if-no-files-found: error
 
+  wakeonlan:
+    name: WakeOnLan APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out WakeOnLan
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.WOL_REPO }}
+          ref: ${{ env.WOL_REF }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle (wrapper cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          sed -i 's/^networkTimeout=.*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties
+          ./gradlew --no-daemon :app:assembleDebug || { sleep 20; ./gradlew --no-daemon :app:assembleDebug; }
+          mkdir -p out && cp app/build/outputs/apk/debug/*.apk out/wakeonlan-debug.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wakeonlan-apk
+          path: out/wakeonlan-debug.apk
+          if-no-files-found: error
+
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [moonlight, tailscale]
+    needs: [moonlight, tailscale, wakeonlan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

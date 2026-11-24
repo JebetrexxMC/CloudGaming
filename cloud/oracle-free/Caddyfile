@@ -1,0 +1,7 @@
+{$HS_DOMAIN} {
+	reverse_proxy headscale:8080
+}
+
+{$PLAY_DOMAIN} {
+	reverse_proxy moonlight-web:8080
+}

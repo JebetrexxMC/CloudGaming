@@ -6,6 +6,8 @@ Invoke-WebRequest '${repo_zip}' -OutFile "$root\repo.zip" -UseBasicParsing
 Expand-Archive "$root\repo.zip" -DestinationPath "$root\repo" -Force
 $installer = Get-ChildItem "$root\repo" -Recurse -Filter install.ps1 | Select-Object -First 1
 & $installer.FullName -StreamHost '${stream_host}' -Launcher '${launcher}' -AwsNvidiaDriver `
-  -Vpn '${vpn}' -TailscaleAuthKey '${tailscale_authkey}' -ZeroTierNetwork '${zerotier_network}'
+  -Vpn '${vpn}' -TailscaleAuthKey '${tailscale_authkey}' -ZeroTierNetwork '${zerotier_network}' `
+  -HeadscaleUrl '${headscale_url}' -EasyTierNetwork '${easytier_network}' -EasyTierSecret '${easytier_secret}' `
+  -NebulaConfigUrl '${nebula_config_url}' ${extras}
 Restart-Computer -Force
 </powershell>

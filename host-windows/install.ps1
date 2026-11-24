@@ -10,7 +10,8 @@
   - Downloads the Genshin launcher (HoYoPlay, Collapse, or Starward)
   - Adds a "Genshin Impact" entry to the Apollo/Sunshine apps list
   - Registers the keepalive watchdog (no sleep / no idle disconnect)
-  - Optionally joins a Tailscale tailnet or ZeroTier network (private, no open ports)
+  - Optionally joins a private network: Tailscale, Headscale, ZeroTier, EasyTier or Nebula
+  - Extras: RustDesk, Virtual Display Driver, Playnite, Moonlight Internet Hosting Tool
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File install.ps1
@@ -29,10 +30,21 @@ param(
     [string]$InstallRoot = 'C:\CloudGaming',
 
     # Private network so Moonlight ports never need to face the internet.
-    [ValidateSet('None', 'Tailscale', 'ZeroTier')]
+    [ValidateSet('None', 'Tailscale', 'Headscale', 'ZeroTier', 'EasyTier', 'Nebula')]
     [string]$Vpn = 'None',
     [string]$TailscaleAuthKey = $env:TAILSCALE_AUTHKEY,
+    [string]$HeadscaleUrl = $env:HEADSCALE_URL,            # e.g. https://hs.example.duckdns.org
     [string]$ZeroTierNetwork = $env:ZEROTIER_NETWORK,
+    [string]$EasyTierNetwork = $env:EASYTIER_NETWORK,      # network name
+    [string]$EasyTierSecret = $env:EASYTIER_SECRET,        # network secret
+    [string]$EasyTierPeer = $(if ($env:EASYTIER_PEER) { $env:EASYTIER_PEER } else { 'tcp://public.easytier.top:11010' }),
+    [string]$NebulaConfigUrl = $env:NEBULA_CONFIG_URL,     # zip with config.yml, ca.crt, host.crt, host.key
+
+    # Extras
+    [switch]$RustDesk,             # remote admin without RDP (RDP breaks the stream's display)
+    [switch]$VirtualDisplay,       # VirtualDrivers/Virtual-Display-Driver (auto with Sunshine; Apollo has SudoVDA)
+    [switch]$Playnite,             # Playnite fullscreen as a Moonlight app (one library for all launchers)
+    [switch]$InternetHostingTool,  # moonlight-stream/Internet-Hosting-Tool for a HOME PC behind NAT
 
     # Where Genshin will be installed by the launcher (used for the app entry).
     [string]$GenshinExe = 'C:\Program Files\HoYoPlay\games\Genshin Impact game\GenshinImpact.exe'
@@ -141,6 +153,12 @@ if (Test-Path $appsFile) {
     $apps = [pscustomobject]@{ env = @{}; apps = @() }
 }
 $apps.apps = @($apps.apps | Where-Object { $_.name -ne $genshin.name }) + $genshin
+if ($Playnite) {
+    $pnExe = Join-Path $env:LOCALAPPDATA 'Playnite\Playnite.FullscreenApp.exe'
+    $apps.apps = @($apps.apps | Where-Object { $_.name -ne 'Playnite' }) + [pscustomobject]@{
+        name = 'Playnite'; cmd = "`"$pnExe`" --hidesplashscreen"; 'auto-detach' = 'true'; 'wait-all' = 'true'; 'exit-timeout' = '5'
+    }
+}
 $apps | ConvertTo-Json -Depth 10 | Set-Content -Path $appsFile -Encoding UTF8
 
 # ---------------------------------------------------------------- Firewall
@@ -180,6 +198,75 @@ switch ($Vpn) {
             Write-Host "    Joined $ZeroTierNetwork. Authorize 'genshin-host' in my.zerotier.com, then use its ZeroTier IP in Moonlight."
         }
     }
+    'Headscale' {
+        Write-Step 'Installing Tailscale client for your own Headscale server'
+        if (-not $HeadscaleUrl) { throw '-HeadscaleUrl is required with -Vpn Headscale' }
+        $msi = Join-Path $Downloads 'tailscale-setup-latest-amd64.msi'
+        Invoke-WebRequest 'https://pkgs.tailscale.com/stable/tailscale-setup-latest-amd64.msi' -OutFile $msi -UseBasicParsing
+        Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn TS_UNATTENDEDMODE=always" -Wait
+        $ts = 'C:\Program Files\Tailscale\tailscale.exe'
+        $upArgs = @('up', "--login-server=$HeadscaleUrl", '--hostname=genshin-host', '--unattended')
+        if ($TailscaleAuthKey) { $upArgs += "--authkey=$TailscaleAuthKey" }
+        & $ts @upArgs
+    }
+    'EasyTier' {
+        Write-Step 'Installing EasyTier (P2P mesh VPN)'
+        if (-not $EasyTierNetwork -or -not $EasyTierSecret) { throw '-EasyTierNetwork and -EasyTierSecret are required' }
+        $zip = Get-LatestReleaseAsset -Repo 'EasyTier/EasyTier' -Pattern '^easytier-windows-x86_64-.*\.zip$'
+        $etDir = Join-Path $InstallRoot 'easytier'
+        Expand-Archive $zip -DestinationPath $etDir -Force
+        $core = Get-ChildItem $etDir -Recurse -Filter 'easytier-core.exe' | Select-Object -First 1
+        $etArgs = "--network-name $EasyTierNetwork --network-secret $EasyTierSecret -p $EasyTierPeer --hostname genshin-host -d"
+        $action = New-ScheduledTaskAction -Execute $core.FullName -Argument $etArgs -WorkingDirectory $core.DirectoryName
+        $trigger = New-ScheduledTaskTrigger -AtStartup
+        $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
+        Register-ScheduledTask -TaskName 'CloudGaming-EasyTier' -Action $action -Trigger $trigger -Settings $set -User 'SYSTEM' -RunLevel Highest -Force | Out-Null
+        Start-ScheduledTask -TaskName 'CloudGaming-EasyTier'
+        Write-Host "    Joined EasyTier network '$EasyTierNetwork' via $EasyTierPeer (virtual IP via DHCP, see easytier-cli peer)"
+    }
+    'Nebula' {
+        Write-Step 'Installing Nebula (Slack overlay network)'
+        if (-not $NebulaConfigUrl) { throw '-NebulaConfigUrl is required (zip with config.yml, ca.crt, host.crt, host.key)' }
+        $zip = Get-LatestReleaseAsset -Repo 'slackhq/nebula' -Pattern '^nebula-windows-amd64\.zip$'
+        $nbDir = Join-Path $InstallRoot 'nebula'
+        Expand-Archive $zip -DestinationPath $nbDir -Force
+        $cfgZip = Join-Path $Downloads 'nebula-config.zip'
+        Invoke-WebRequest $NebulaConfigUrl -OutFile $cfgZip -UseBasicParsing
+        Expand-Archive $cfgZip -DestinationPath $nbDir -Force
+        $nb = Get-ChildItem $nbDir -Recurse -Filter 'nebula.exe' | Select-Object -First 1
+        & $nb.FullName -service install -config (Join-Path $nbDir 'config.yml')
+        Start-Service nebula -ErrorAction SilentlyContinue
+    }
+}
+
+# ---------------------------------------------------------------- Extras
+if ($StreamHost -eq 'Sunshine' -or $VirtualDisplay) {
+    Write-Step 'Virtual Display Driver (headless monitor for Sunshine)'
+    $vdd = Get-LatestReleaseAsset -Repo 'VirtualDrivers/Virtual-Display-Driver' -Pattern '^VirtualDisplayDriver-x86\.Driver\.Only\.zip$'
+    $vddDir = Join-Path $InstallRoot 'vdd'
+    Expand-Archive $vdd -DestinationPath $vddDir -Force
+    Get-ChildItem $vddDir -Recurse -Filter *.inf | ForEach-Object { pnputil /add-driver $_.FullName /install | Out-Null }
+    $ctl = Get-LatestReleaseAsset -Repo 'VirtualDrivers/Virtual-Display-Driver' -Pattern '^VDD\.Control\..*\.zip$'
+    Expand-Archive $ctl -DestinationPath (Join-Path $vddDir 'control') -Force
+    Write-Host "    If no virtual monitor shows up, run VDD Control in $vddDir\control and click Install."
+}
+
+if ($RustDesk) {
+    Write-Step 'Installing RustDesk (remote admin; use it instead of RDP while streaming)'
+    $rd = Get-LatestReleaseAsset -Repo 'rustdesk/rustdesk' -Pattern '^rustdesk-.*-x86_64\.msi$'
+    Start-Process msiexec.exe -ArgumentList "/i `"$rd`" /qn" -Wait
+}
+
+if ($Playnite) {
+    Write-Step 'Installing Playnite (game library frontend)'
+    $pn = Get-LatestReleaseAsset -Repo 'JosefNemec/Playnite' -Pattern '^Playnite.*\.exe$'
+    Start-Process $pn -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait
+}
+
+if ($InternetHostingTool) {
+    Write-Step 'Installing Moonlight Internet Hosting Tool (home PC behind NAT/CGNAT)'
+    $iht = Get-LatestReleaseAsset -Repo 'moonlight-stream/Internet-Hosting-Tool' -Pattern '^InternetHostingToolSetup-.*\.exe$'
+    Start-Process $iht -ArgumentList '/quiet /norestart' -Wait
 }
 
 # ---------------------------------------------------------------- Keepalive

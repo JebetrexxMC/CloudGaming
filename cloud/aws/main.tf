@@ -33,6 +33,13 @@ locals {
   moonlight_tcp = [47984, 47989, 47990, 48010]
   moonlight_udp = [[47998, 48000], [48002, 48002], [48010, 48010]]
   open_ports    = var.vpn == "None" || var.expose_moonlight_publicly
+  vpn_p2p = {
+    Tailscale = [[41641, "udp"]]
+    Headscale = [[41641, "udp"]]
+    ZeroTier  = [[9993, "udp"]]
+    EasyTier  = [[11010, "udp"], [11010, "tcp"]]
+    Nebula    = [[4242, "udp"]]
+  }
 }
 
 resource "aws_security_group" "gaming" {
@@ -72,12 +79,12 @@ resource "aws_security_group" "gaming" {
 
   # Tailscale / ZeroTier direct (peer-to-peer) connections
   dynamic "ingress" {
-    for_each = var.vpn == "None" ? [] : [var.vpn == "Tailscale" ? 41641 : 9993]
+    for_each = lookup(local.vpn_p2p, var.vpn, [])
     content {
       description = "${var.vpn} P2P"
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "udp"
+      from_port   = ingress.value[0]
+      to_port     = ingress.value[0]
+      protocol    = ingress.value[1]
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
@@ -176,6 +183,11 @@ resource "aws_instance" "gaming" {
     vpn               = var.vpn
     tailscale_authkey = var.tailscale_authkey
     zerotier_network  = var.zerotier_network
+    headscale_url     = var.headscale_url
+    easytier_network  = var.easytier_network
+    easytier_secret   = var.easytier_secret
+    nebula_config_url = var.nebula_config_url
+    extras            = join(" ", [for e in var.extras : "-${e}"])
   })
 
   tags = { Name = var.name }

@@ -1,0 +1,62 @@
+name: vm-control
+# Bring the Genshin host online / offline from the Actions tab or the website console.
+# Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, CG_INSTANCE_ID, CG_REGION (default ap-southeast-1)
+# Optional: auto-stop after N hours so a forgotten session doesn't run up the bill.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'start | stop | status'
+        type: choice
+        options: [start, stop, status]
+        default: start
+      auto_stop_hours:
+        description: 'Stop automatically after N hours (0 = never, play as long as you want)'
+        default: '0'
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      AWS_REGION: ${{ secrets.CG_REGION || 'ap-southeast-1' }}
+      ID: ${{ secrets.CG_INSTANCE_ID }}
+    steps:
+      - name: Check secrets
+        run: |
+          if [ -z "$ID" ]; then
+            echo "::error::Add repo secrets CG_INSTANCE_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (terraform output instance_id)."
+            exit 1
+          fi
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: ${{ inputs.action }}
+        run: |
+          case "${{ inputs.action }}" in
+            start)
+              aws ec2 start-instances --instance-ids "$ID" >/dev/null
+              aws ec2 wait instance-running --instance-ids "$ID"
+              echo "### Genshin host is online" >> "$GITHUB_STEP_SUMMARY"
+              echo "Give Windows ~1-2 min to boot, then open Moonlight and pick **Genshin Impact**." >> "$GITHUB_STEP_SUMMARY" ;;
+            stop)
+              aws ec2 stop-instances --instance-ids "$ID" >/dev/null
+              echo "### Genshin host stopping (disk kept)" >> "$GITHUB_STEP_SUMMARY" ;;
+            status) ;;
+          esac
+          aws ec2 describe-instances --instance-ids "$ID" \
+            --query 'Reservations[0].Instances[0].[InstanceType,State.Name]' --output text
+      - name: Auto-stop timer
+        if: inputs.action == 'start' && inputs.auto_stop_hours != '0'
+        run: |
+          H="${{ inputs.auto_stop_hours }}"
+          [ "$H" -le 5 ] || { echo "Max 5h on a GitHub runner; using 5"; H=5; }
+          sleep $(( H * 3600 ))
+          aws ec2 stop-instances --instance-ids "$ID" >/dev/null
+          echo "Auto-stopped after ${H}h" >> "$GITHUB_STEP_SUMMARY"

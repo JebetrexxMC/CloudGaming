@@ -8,6 +8,12 @@ stream_host   = "Apollo"           # or "Sunshine"
 launcher      = "HoYoPlay"         # or "Collapse" / "Starward"
 
 # Private networking (recommended): keeps Moonlight ports closed to the internet.
-vpn               = "Tailscale"    # "None" | "Tailscale" | "ZeroTier"
+vpn               = "Tailscale"    # "None" | "Tailscale" | "Headscale" | "ZeroTier" | "EasyTier" | "Nebula"
 tailscale_authkey = ""             # tskey-auth-...
 zerotier_network  = ""             # 16-char network ID
+headscale_url     = ""             # https://hs.<you>.duckdns.org (see cloud/oracle-free)
+easytier_network  = ""
+easytier_secret   = ""
+nebula_config_url = ""
+
+extras = ["RustDesk"]              # + "VirtualDisplay", "Playnite"

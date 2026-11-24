@@ -41,5 +41,6 @@ jobs:
         run: |
           PUBLIC_OR_VPN_IP=127.0.0.1 docker compose -f web-client/docker-compose.yml config -q
           docker compose -f linux-wolf/docker-compose.yml config -q
+          HS_DOMAIN=a PLAY_DOMAIN=b PUBLIC_IP=127.0.0.1 docker compose -f cloud/oracle-free/docker-compose.yml config -q
       - name: shellcheck
-        run: shellcheck scripts/*.sh cloud/cloudypad/*.sh
+        run: shellcheck scripts/*.sh cloud/cloudypad/*.sh cloud/oracle-free/*.sh cloud/nebula/*.sh
