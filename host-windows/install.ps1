@@ -118,10 +118,12 @@ if ($StreamHost -eq 'Apollo') {
     $exe = Get-LatestReleaseAsset -Repo 'ClassicOldSong/Apollo' -Pattern '^Apollo-.*\.exe$'
     $HostDir = 'C:\Program Files\Apollo'
 } else {
-    $exe = Get-LatestReleaseAsset -Repo @($SunshineRepo, 'LizardByte/Sunshine') -Pattern 'windows-installer\.exe$|Sunshine.*\.exe$'
+    # 1) our build of your fork (CloudGaming release), 2) fork releases, 3) LizardByte upstream
+    $exe = Get-LatestReleaseAsset -Repo @('JebetrexxMC/CloudGaming', $SunshineRepo, 'LizardByte/Sunshine') -Pattern 'Sunshine-Windows-AMD64-installer\.msi$|windows-installer\.exe$'
     $HostDir = 'C:\Program Files\Sunshine'
 }
-Start-Process $exe -ArgumentList '/S' -Wait
+if ($exe -like '*.msi') { Start-Process msiexec.exe -ArgumentList "/i `"$exe`" /qn /norestart" -Wait }
+else { Start-Process $exe -ArgumentList '/S' -Wait }
 
 # ---------------------------------------------------------------- Virtual gamepad
 Write-Step 'Installing ViGEmBus (virtual Xbox 360 / DualShock 4 controller)'

@@ -123,7 +123,7 @@ See [`docs/`](docs) for more detail.
 
 | Part | Fork | Built by |
 |---|---|---|
-| Host (Windows PC/VM) | [JebetrexxMC/Sunshine](https://github.com/JebetrexxMC/Sunshine) | `install.ps1 -StreamHost Sunshine -SunshineRepo JebetrexxMC/Sunshine`. The fork's own CI only publishes releases inside the LizardByte org, so the installer uses fork releases if you add any, else LizardByte/Sunshine. |
+| Host (Windows PC/VM) | [JebetrexxMC/Sunshine](https://github.com/JebetrexxMC/Sunshine) | `build-forks.yml` -> `Sunshine-Windows-AMD64-installer.msi`. `install.ps1 -StreamHost Sunshine` uses that build first, then fork releases, then LizardByte/Sunshine. (`Sunshine-master.zip` in v1.1.0 is source code only, so it can't be installed directly.) |
 | Android | [JebetrexxMC/moonlight-android](https://github.com/JebetrexxMC/moonlight-android) | `build-apk.yml` -> `cloudsync-debug.apk` |
 | PC | [JebetrexxMC/moonlight-qt](https://github.com/JebetrexxMC/moonlight-qt) | `build-forks.yml` -> `moonlight-qt-windows-x64.zip` |
 | Browser | [JebetrexxMC/moonlight-web-stream](https://github.com/JebetrexxMC/moonlight-web-stream) | `build-forks.yml` -> `ghcr.io/jebetrexxmc/moonlight-web-stream:latest` (amd64 + arm64) |

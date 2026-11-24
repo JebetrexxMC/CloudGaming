@@ -1,4 +1,4 @@
-name: Build forks (moonlight-qt, moonlight-web-stream)
+name: Build forks (Sunshine, moonlight-qt, moonlight-web-stream)
 
 # Builds the JebetrexxMC forks used to play Genshin Impact:
 #   - moonlight-qt          -> moonlight-qt-windows-x64.zip (PC client)
@@ -16,6 +16,9 @@ on:
       qt_repo:
         description: 'moonlight-qt repo'
         default: 'JebetrexxMC/moonlight-qt'
+      sunshine_repo:
+        description: 'Sunshine repo'
+        default: 'JebetrexxMC/Sunshine'
       web_repo:
         description: 'moonlight-web-stream repo'
         default: 'JebetrexxMC/moonlight-web-stream'
@@ -32,6 +35,7 @@ concurrency:
 
 env:
   QT_REPO: ${{ inputs.qt_repo || 'JebetrexxMC/moonlight-qt' }}
+  SUNSHINE_REPO: ${{ inputs.sunshine_repo || 'JebetrexxMC/Sunshine' }}
   WEB_REPO: ${{ inputs.web_repo || 'JebetrexxMC/moonlight-web-stream' }}
 
 jobs:
@@ -88,6 +92,80 @@ jobs:
         with:
           name: moonlight-qt-windows
           path: out/*.zip
+          if-no-files-found: error
+
+  sunshine-windows:
+    # Same steps as the fork's ci-windows.yml (AMD64), minus signing/tests.
+    name: Sunshine (Windows AMD64 installer)
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ env.SUNSHINE_REPO }}
+          submodules: recursive
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ucrt64
+          update: true
+          install: >-
+            git wget
+            mingw-w64-ucrt-x86_64-boost mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-cppwinrt
+            mingw-w64-ucrt-x86_64-curl-winssl mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-miniupnpc
+            mingw-w64-ucrt-x86_64-nlohmann-json mingw-w64-ucrt-x86_64-onevpl mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-opus mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-qt6-static
+            mingw-w64-ucrt-x86_64-MinHook mingw-w64-ucrt-x86_64-nsis mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-doxygen mingw-w64-ucrt-x86_64-graphviz
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+      - name: Node path
+        shell: pwsh
+        run: echo "NODEJS_PATH=$(Split-Path -Parent (Get-Command node).Source)" >> $env:GITHUB_ENV
+      - uses: actions/setup-python@v5
+        id: py
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v6
+      - name: Python tools
+        env:
+          MSYS2_PATH_TYPE: inherit
+          UV_PYTHON: ${{ steps.py.outputs.python-path }}
+        run: if [ -f uv.lock ]; then uv sync --locked --no-python-downloads --no-install-project || true; fi
+      - name: Build
+        env:
+          BRANCH: master
+          BUILD_VERSION: ''
+          COMMIT: ${{ github.sha }}
+        run: |
+          export PATH="$PATH:$(cygpath "$NODEJS_PATH")"
+          cmake -B build -G Ninja -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF \
+            -DSUNSHINE_ASSETS_DIR=assets \
+            -DSUNSHINE_PUBLISHER_NAME="JebetrexxMC" \
+            -DSUNSHINE_PUBLISHER_WEBSITE="https://github.com/JebetrexxMC/Sunshine" \
+            -DSUNSHINE_PUBLISHER_ISSUE_URL="https://github.com/JebetrexxMC/Sunshine/issues"
+          ninja -C build
+      - name: Package
+        run: |
+          mkdir -p out
+          cd build
+          cpack -G WIX || echo "WIX packaging failed, ZIP only"
+          cpack -G ZIP
+          [ -f cpack_artifacts/Sunshine.msi ] && mv cpack_artifacts/Sunshine.msi ../out/Sunshine-Windows-AMD64-installer.msi
+          mv cpack_artifacts/Sunshine.zip ../out/Sunshine-Windows-AMD64-portable.zip
+          ls -la ../out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sunshine-windows
+          path: out/*
           if-no-files-found: error
 
   moonlight-web:
@@ -176,7 +254,7 @@ jobs:
   release:
     name: Attach to release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [moonlight-qt-windows, moonlight-web]
+    needs: [moonlight-qt-windows, moonlight-web, sunshine-windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -187,4 +265,5 @@ jobs:
         with:
           files: |
             dist/*.zip
+            dist/*.msi
             dist/*.tar.gz
