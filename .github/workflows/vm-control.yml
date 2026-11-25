@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'start | stop | status'
+        description: 'start | stop | status | session (on now, auto-off when the run ends or is cancelled)'
         type: choice
-        options: [start, stop, status]
+        options: [start, stop, status, session]
         default: start
       auto_stop_hours:
         description: 'Stop automatically after N hours (0 = never, play as long as you want)'
@@ -40,7 +40,7 @@ jobs:
       - name: ${{ inputs.action }}
         run: |
           case "${{ inputs.action }}" in
-            start)
+            start|session)
               aws ec2 start-instances --instance-ids "$ID" >/dev/null
               aws ec2 wait instance-running --instance-ids "$ID"
               echo "### Genshin host is online" >> "$GITHUB_STEP_SUMMARY"
@@ -60,3 +60,18 @@ jobs:
           sleep $(( H * 3600 ))
           aws ec2 stop-instances --instance-ids "$ID" >/dev/null
           echo "Auto-stopped after ${H}h" >> "$GITHUB_STEP_SUMMARY"
+      - name: Session - keep the PC on (cancel this run to stop it)
+        if: inputs.action == 'session'
+        run: |
+          H="${{ inputs.auto_stop_hours }}"; [ "$H" = "0" ] && H=5
+          [ "$H" -le 5 ] || H=5
+          echo "Session open for up to ${H}h. Cancel this run any time to shut the PC down." >> "$GITHUB_STEP_SUMMARY"
+          sleep $(( H * 3600 ))
+      # Same pattern as the marketplace "AWS EC2 Start and Stop" action
+      # (flyweightrocks/aws-ec2-action): stop in cleanup, even on cancel.
+      # Done with the AWS CLI because that action still targets the retired node12 runtime.
+      - name: Session - stop the PC
+        if: always() && inputs.action == 'session'
+        run: |
+          aws ec2 stop-instances --instance-ids "$ID" >/dev/null
+          echo "### Session ended, Genshin host stopping (disk kept)" >> "$GITHUB_STEP_SUMMARY"

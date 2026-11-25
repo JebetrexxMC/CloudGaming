@@ -119,6 +119,12 @@ This streams **your own** copy of Genshin Impact from **your own** machine to yo
 
 See [`docs/`](docs) for more detail.
 
+## Free host: your own PC
+
+Don't want a cloud bill? Use your home PC as the host: see [docs/HOME-PC.md](docs/HOME-PC.md)
+(Sunshine + Moonlight Internet Hosting Tool). For AWS, the `vm-control` workflow now has a
+`session` mode that turns the PC off automatically when the run ends or you cancel it.
+
 ## Forks used for Genshin Impact
 
 | Part | Fork | Built by |

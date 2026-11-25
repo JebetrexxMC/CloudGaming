@@ -306,7 +306,7 @@ if ($Playnite) {
 
 if ($InternetHostingTool) {
     Write-Step 'Installing Moonlight Internet Hosting Tool (home PC behind NAT/CGNAT)'
-    $iht = Get-LatestReleaseAsset -Repo 'moonlight-stream/Internet-Hosting-Tool' -Pattern '^InternetHostingToolSetup-.*\.exe$'
+    $iht = Get-LatestReleaseAsset -Repo @('JebetrexxMC/Internet-Hosting-Tool','moonlight-stream/Internet-Hosting-Tool') -Pattern '^InternetHostingToolSetup-.*\.exe$'
     Start-Process $iht -ArgumentList '/quiet /norestart' -Wait
 }
 
