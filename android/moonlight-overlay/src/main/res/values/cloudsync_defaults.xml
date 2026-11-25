@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in defaults so Play works with no Setup. build-apk.yml fills these from the
+     repo variable CG_HOST (Settings > Secrets and variables > Actions > Variables). -->
+<resources>
+    <string name="cloudsync_default_host" translatable="false"></string>
+</resources>

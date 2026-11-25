@@ -49,6 +49,7 @@ env:
   TAILSCALE_REPO: ${{ inputs.tailscale_repo || 'JebetrexxMC/tailscale-android' }}
   TAILSCALE_REF: ${{ inputs.tailscale_ref || 'main' }}
   APP_LABEL: ${{ inputs.app_label || 'CloudSync' }}
+  CG_HOST_DEFAULT: ${{ vars.CG_HOST }}
 
 jobs:
   moonlight:
@@ -100,6 +101,10 @@ jobs:
           # Optional local overrides (icons, strings) committed under android/moonlight-overlay
           if [ -d "$GITHUB_WORKSPACE/android/moonlight-overlay" ]; then
             cp -rv "$GITHUB_WORKSPACE/android/moonlight-overlay/." app/
+            # Built-in host so Play needs no Setup (repo variable CG_HOST, e.g. 13.250.1.2 or genshin-host)
+            if [ -n "${CG_HOST_DEFAULT}" ]; then
+              sed -i "s#name=\"cloudsync_default_host\" translatable=\"false\"></string>#name=\"cloudsync_default_host\" translatable=\"false\">${CG_HOST_DEFAULT}</string>#" app/src/main/res/values/cloudsync_defaults.xml
+            fi
           fi
           # CloudSync launcher (Collapse-style UI) becomes the launcher; stock host list stays inside.
           python3 "$GITHUB_WORKSPACE/android/patch_manifest.py" app/src/main/AndroidManifest.xml

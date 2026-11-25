@@ -82,7 +82,7 @@ import java.util.concurrent.Executors;
  *    (the same content Collapse and HoYoPlay show), nothing bundled.
  *  - Layered parallax (tilt), slow zoom, rotating backgrounds, blur on scroll,
  *    acrylic panels, banner carousel with pips, news tabs, playtime.
- *  - Start Game: adds your host to Moonlight and opens it. The split arrow has
+ *  - Play: streams straight from your cloud PC (built-in host, no Setup); with no PC it opens Genshin Impact Cloud. The split arrow has
  *    Start/Stop host (GitHub Actions), Wake PC, all hosts, VPN and setup.
  *  - Play without a PC: Genshin Impact Cloud (official) and GeForce NOW.
  */
@@ -853,6 +853,12 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
 
     // ------------------------------------------------------------------ settings
 
+    /** Host from Setup, else the one built into the APK (repo variable CG_HOST). */
+    private String host() {
+        String h = prefs.getString("host", "").trim();
+        return h.isEmpty() ? getString(com.limelight.R.string.cloudsync_default_host).trim() : h;
+    }
+
     private String repo() { return prefs.getString("repo", "JebetrexxMC/CloudGaming").trim(); }
     private String owner() { String r = repo(); int i = r.indexOf('/'); return i > 0 ? r.substring(0, i) : r; }
     private String repoName() { String r = repo(); int i = r.indexOf('/'); return i > 0 ? r.substring(i + 1) : r; }
@@ -949,7 +955,7 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 JSONObject h = st.optJSONObject("host");
                 final String s; final int c;
                 if (h == null || !h.optBoolean("configured")) {
-                    s = prefs.getString("host", "").isEmpty() ? "Host not set up. Open Setup." : "Host: " + prefs.getString("host", "");
+                    s = host().isEmpty() ? "No cloud PC yet: Play uses Genshin Impact \u00b7 Cloud" : "Host: " + host();
                     c = Color.parseColor("#F0B43C");
                 } else if (h.optBoolean("online")) {
                     s = "Online" + (h.isNull("ms") ? "" : " · " + h.optInt("ms") + " ms") + ". Ready to play.";
@@ -1020,11 +1026,12 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
      * 2) pair once if needed (Moonlight PIN screen), 3) launch the game's stream directly.
      */
     private void play() {
-        final String host = prefs.getString("host", "");
+        final String host = host();
         final String name = gameTitle.getText().toString();
         if (host.isEmpty()) {
-            toast("Enter your host address in Setup (the Elastic IP, or the Tailscale name).");
-            setup();
+            // No own cloud PC configured: go straight to HoYoverse's official cloud, no Setup screen.
+            if (name.toLowerCase().contains("genshin")) { openCloudGenshin(); }
+            else { toast("No cloud PC yet. Opening GeForce NOW."); openApp(GFN_PKG); }
             return;
         }
         toast("Connecting to your cloud PC...");
