@@ -51,7 +51,11 @@ import android.widget.Toast;
 import com.limelight.PcView;
 import com.limelight.computers.ComputerManagerService;
 import com.limelight.nvstream.http.ComputerDetails;
+import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
+import com.limelight.nvstream.http.PairingManager;
+import com.limelight.binding.PlatformBinding;
+import com.limelight.utils.ServerHelper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -1009,6 +1013,12 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         return text;
     }
 
+    /**
+     * Play: streams the game from your cloud PC inside CloudSync. Nothing is installed on
+     * the phone; Genshin runs on the host and only video/audio/input travel.
+     * 1) reach the host (starts the cloud VM through GitHub Actions if it's off and a token is set),
+     * 2) pair once if needed (Moonlight PIN screen), 3) launch the game's stream directly.
+     */
     private void play() {
         final String host = prefs.getString("host", "");
         final String name = gameTitle.getText().toString();
@@ -1017,38 +1027,80 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
             setup();
             return;
         }
-        toast("Connecting to " + host + "...");
+        toast("Connecting to your cloud PC...");
+        prefs.edit().putLong("session_start", System.currentTimeMillis()).apply();
         bindService(new Intent(this, ComputerManagerService.class), new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName cn, IBinder binder) {
                 final ServiceConnection self = this;
                 final ComputerManagerService.ComputerManagerBinder b = (ComputerManagerService.ComputerManagerBinder) binder;
                 io.execute(() -> {
-                    boolean ok = false;
-                    try {
-                        String h = host;
-                        int port = NvHTTP.DEFAULT_HTTP_PORT;
-                        int colon = h.lastIndexOf(':');
-                        if (colon > 0 && h.indexOf(':') == colon) {
-                            port = Integer.parseInt(h.substring(colon + 1));
-                            h = h.substring(0, colon);
+                    ComputerDetails d = reach(b, host);
+                    if (d == null && !prefs.getString("token", "").isEmpty()) {
+                        ui.post(() -> { toast("Cloud PC is off. Starting it (about 2-4 minutes)..."); dispatch("start"); });
+                        long until = System.currentTimeMillis() + 6 * 60_000L;
+                        while (d == null && System.currentTimeMillis() < until) {
+                            try { Thread.sleep(15_000); } catch (InterruptedException e) { break; }
+                            d = reach(b, host);
                         }
-                        ComputerDetails d = new ComputerDetails();
-                        d.manualAddress = new ComputerDetails.AddressTuple(h, port);
-                        ok = b.addComputerBlocking(d);
+                    }
+                    final ComputerDetails pc = d;
+                    if (pc == null) {
+                        finish(self, () -> toast("Cloud PC not reachable. Is it started, and is your VPN on?"));
+                        return;
+                    }
+                    if (pc.pairState != PairingManager.PairState.PAIRED) {
+                        finish(self, () -> {
+                            toast("First time only: tap your PC and enter the PIN in the host web UI (port 47990).");
+                            openMoonlight();
+                        });
+                        return;
+                    }
+                    NvApp app = null;
+                    try {
+                        NvHTTP http = new NvHTTP(ServerHelper.getCurrentAddressFromComputer(pc), pc.httpsPort,
+                                b.getUniqueId(), pc.serverCert, PlatformBinding.getCryptoProvider(CloudSyncActivity.this));
+                        for (NvApp a : http.getAppList()) {
+                            String n = a.getAppName();
+                            if (n.equalsIgnoreCase(name)) { app = a; break; }
+                            if (app == null && (n.toLowerCase().contains(name.toLowerCase()) || name.toLowerCase().contains(n.toLowerCase()))) app = a;
+                        }
                     } catch (Exception ignored) { }
-                    final boolean fok = ok;
-                    ui.post(() -> {
-                        try { unbindService(self); } catch (Exception ignored) { }
-                        toast(fok ? "Host ready. Tap it (pair once with the Apollo PIN), then pick " + name + "."
-                                  : "Host not reachable yet. Is it started, and is your VPN on?");
-                        prefs.edit().putLong("session_start", System.currentTimeMillis()).apply();
-                        openMoonlight();
+                    final NvApp game = app;
+                    finish(self, () -> {
+                        if (game == null) {
+                            toast("\"" + name + "\" isn't in the host's app list yet. Pick it from the list.");
+                            openMoonlight();
+                        } else {
+                            toast("Streaming " + game.getAppName() + " from your cloud PC");
+                            startActivity(ServerHelper.createStartIntent(CloudSyncActivity.this, game, pc, b));
+                        }
                     });
                 });
             }
+            private void finish(ServiceConnection self, Runnable r) {
+                ui.post(() -> { r.run(); try { unbindService(self); } catch (Exception ignored) { } });
+            }
             @Override public void onServiceDisconnected(ComponentName cn) { }
         }, Context.BIND_AUTO_CREATE);
+    }
+
+    /** Adds/polls the host; returns its details when online, else null. */
+    private ComputerDetails reach(ComputerManagerService.ComputerManagerBinder b, String host) {
+        try {
+            String h = host;
+            int port = NvHTTP.DEFAULT_HTTP_PORT;
+            int colon = h.lastIndexOf(':');
+            if (colon > 0 && h.indexOf(':') == colon) {
+                port = Integer.parseInt(h.substring(colon + 1));
+                h = h.substring(0, colon);
+            }
+            ComputerDetails d = new ComputerDetails();
+            d.manualAddress = new ComputerDetails.AddressTuple(h, port);
+            return b.addComputerBlocking(d) ? d : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void openMoonlight() { startActivity(new Intent(this, PcView.class)); }
