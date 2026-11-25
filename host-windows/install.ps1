@@ -69,6 +69,7 @@ function Get-LatestReleaseAsset {
     # -Repo may list several repos (your fork first); the first with a matching asset wins.
     param([string[]]$Repo, [string]$Pattern)
     $headers = @{ 'User-Agent' = 'CloudGaming-installer' }
+    if ($env:GITHUB_TOKEN) { $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN" }  # avoids API rate limits
     $asset = $null; $release = $null
     foreach ($r in $Repo) {
         try {

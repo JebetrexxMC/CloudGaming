@@ -1,0 +1,88 @@
+name: Test Sunshine installer (Windows)
+
+# Runs host-windows/install.ps1 -StreamHost Sunshine on a clean GitHub Windows VM
+# and checks that the Sunshine build from release (your fork) installs and serves.
+# No GPU here, so streaming itself isn't tested: install, service, web UI, config.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'host-windows/**'
+      - '.github/workflows/test-sunshine-installer.yml'
+  workflow_run:
+    workflows: ['Build forks (Sunshine, moonlight-qt, moonlight-web-stream)']
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: install.ps1 -StreamHost Sunshine (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run installer
+        id: install
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          powershell -NoProfile -ExecutionPolicy Bypass -File host-windows/install.ps1 -StreamHost Sunshine *>&1 | Tee-Object -FilePath installer-output.txt
+          "exit=$LASTEXITCODE" | Tee-Object -Append installer-output.txt
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Verify install
+        if: always()
+        shell: pwsh
+        run: |
+          $fail = @()
+          function Check($name, [scriptblock]$test) {
+            try { $ok = & $test } catch { $ok = $false; $err = $_.Exception.Message }
+            $line = if ($ok) { "PASS  $name" } else { "FAIL  $name $err" }
+            Write-Host $line; Add-Content results.txt $line
+            if (-not $ok) { $script:fail += $name }
+          }
+          $dir = 'C:\Program Files\Sunshine'
+          Check 'Sunshine source = CloudGaming release (fork build)' { Select-String -Path installer-output.txt -Pattern 'downloading Sunshine-Windows-AMD64-installer\.msi \(JebetrexxMC/CloudGaming' -Quiet }
+          Check 'sunshine.exe installed'       { Test-Path "$dir\sunshine.exe" }
+          Check 'Sunshine service registered' { [bool](Get-Service -Name 'SunshineService' -ErrorAction SilentlyContinue) }
+          Start-Service SunshineService -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 15
+          Check 'Sunshine service running'     { (Get-Service SunshineService).Status -eq 'Running' }
+          Check 'Web UI on https://localhost:47990' {
+            $r = & curl.exe -sk -o NUL -w '%{http_code}' https://localhost:47990/ ; Write-Host "    http $r"; $r -match '^(200|301|302|401)$'
+          }
+          Check 'apps.json has Genshin Impact' { (Get-Content "$dir\config\apps.json" -Raw | ConvertFrom-Json).apps.name -contains 'Genshin Impact' }
+          Check 'Firewall rules added'         { [bool](Get-NetFirewallRule -DisplayName 'CloudGaming-TCP' -ErrorAction SilentlyContinue) }
+          Check 'ViGEmBus installed'           { [bool](Get-PnpDevice -FriendlyName '*Virtual Gamepad Emulation Bus*' -ErrorAction SilentlyContinue) }
+          Check 'Virtual display driver staged' { (pnputil /enum-drivers | Out-String) -match 'MttVDD|VirtualDisplay|IddSampleDriver' }
+          Check 'Keepalive task registered'    { [bool](Get-ScheduledTask -TaskName 'CloudGaming-Keepalive' -ErrorAction SilentlyContinue) }
+          $v = (Get-Item "$dir\sunshine.exe" -ErrorAction SilentlyContinue).VersionInfo
+          Add-Content results.txt "INFO  sunshine.exe version: $($v.ProductVersion) / $($v.CompanyName)"
+          Get-Content results.txt | ForEach-Object { Add-Content $env:GITHUB_STEP_SUMMARY "    $_" }
+          if ($fail.Count) { Write-Host "::error::Failed checks: $($fail -join ', ')"; exit 1 }
+
+      - name: Collect logs
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force logs | Out-Null
+          Copy-Item installer-output.txt, results.txt logs\ -ErrorAction SilentlyContinue
+          Copy-Item C:\CloudGaming\install.log logs\ -ErrorAction SilentlyContinue
+          Copy-Item 'C:\Program Files\Sunshine\config\sunshine.log' logs\ -ErrorAction SilentlyContinue
+          Copy-Item 'C:\Program Files\Sunshine\config\apps.json' logs\ -ErrorAction SilentlyContinue
+          Get-ChildItem logs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sunshine-installer-logs-${{ matrix.os }}
+          path: logs/
