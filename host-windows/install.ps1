@@ -269,7 +269,24 @@ if ($StreamHost -eq 'Sunshine' -or $VirtualDisplay) {
     $vdd = Get-LatestReleaseAsset -Repo 'VirtualDrivers/Virtual-Display-Driver' -Pattern '^VirtualDisplayDriver-x86\.Driver\.Only\.zip$'
     $vddDir = Join-Path $InstallRoot 'vdd'
     Expand-Archive $vdd -DestinationPath $vddDir -Force
-    Get-ChildItem $vddDir -Recurse -Filter *.inf | ForEach-Object { pnputil /add-driver $_.FullName /install | Out-Null }
+    # Trust the driver's signer first, otherwise Windows waits on a hidden "install this
+    # device software?" prompt and pnputil never returns on a headless host.
+    Get-ChildItem $vddDir -Recurse -Include *.cat, *.sys | ForEach-Object {
+        $cert = (Get-AuthenticodeSignature $_.FullName).SignerCertificate
+        if ($cert) {
+            foreach ($store in 'TrustedPublisher', 'Root') {
+                $st = New-Object System.Security.Cryptography.X509Certificates.X509Store($store, 'LocalMachine')
+                $st.Open('ReadWrite'); $st.Add($cert); $st.Close()
+            }
+        }
+    }
+    Get-ChildItem $vddDir -Recurse -Filter *.inf | ForEach-Object {
+        $p = Start-Process pnputil.exe -ArgumentList "/add-driver `"$($_.FullName)`" /install" -PassThru -WindowStyle Hidden
+        if (-not $p.WaitForExit(120000)) {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            Write-Warning "    VDD driver install timed out; run VDD Control in $vddDir\control later"
+        }
+    }
     $ctl = Get-LatestReleaseAsset -Repo 'VirtualDrivers/Virtual-Display-Driver' -Pattern '^VDD\.Control\..*\.zip$'
     Expand-Archive $ctl -DestinationPath (Join-Path $vddDir 'control') -Force
     Write-Host "    If no virtual monitor shows up, run VDD Control in $vddDir\control and click Install."

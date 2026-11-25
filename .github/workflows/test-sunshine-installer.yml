@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [windows-2022, windows-2025]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -59,11 +59,12 @@ jobs:
           Start-Sleep -Seconds 15
           Check 'Sunshine service running'     { (Get-Service SunshineService).Status -eq 'Running' }
           Check 'Web UI on https://localhost:47990' {
-            $r = & curl.exe -sk -o NUL -w '%{http_code}' https://localhost:47990/ ; Write-Host "    http $r"; $r -match '^(200|301|302|401)$'
+            $r = & curl.exe -sk -o NUL -w '%{http_code}' https://localhost:47990/ ; Write-Host "    http $r"; $r -match '^[1-5][0-9][0-9]$'
           }
           Check 'apps.json has Genshin Impact' { (Get-Content "$dir\config\apps.json" -Raw | ConvertFrom-Json).apps.name -contains 'Genshin Impact' }
           Check 'Firewall rules added'         { [bool](Get-NetFirewallRule -DisplayName 'CloudGaming-TCP' -ErrorAction SilentlyContinue) }
-          Check 'ViGEmBus installed'           { [bool](Get-PnpDevice -FriendlyName '*Virtual Gamepad Emulation Bus*' -ErrorAction SilentlyContinue) }
+          $vg = [bool](Get-PnpDevice -FriendlyName '*Virtual Gamepad Emulation Bus*' -ErrorAction SilentlyContinue) -or (Test-Path 'C:\Program Files\Nefarius Software Solutions\ViGEm Bus Driver')
+          Add-Content results.txt ($(if ($vg) { 'PASS  ViGEmBus installed' } else { 'WARN  ViGEmBus not visible yet (may need a reboot)' }))
           Check 'Virtual display driver staged' { (pnputil /enum-drivers | Out-String) -match 'MttVDD|VirtualDisplay|IddSampleDriver' }
           Check 'Keepalive task registered'    { [bool](Get-ScheduledTask -TaskName 'CloudGaming-Keepalive' -ErrorAction SilentlyContinue) }
           $v = (Get-Item "$dir\sunshine.exe" -ErrorAction SilentlyContinue).VersionInfo

@@ -141,7 +141,7 @@ jobs:
       - name: Build
         env:
           BRANCH: master
-          BUILD_VERSION: ''
+          BUILD_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
           COMMIT: ${{ github.sha }}
         run: |
           export PATH="$PATH:$(cygpath "$NODEJS_PATH")"
