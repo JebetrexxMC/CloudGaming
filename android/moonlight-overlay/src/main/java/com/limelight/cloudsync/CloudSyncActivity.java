@@ -82,16 +82,13 @@ import java.util.concurrent.Executors;
  *    (the same content Collapse and HoYoPlay show), nothing bundled.
  *  - Layered parallax (tilt), slow zoom, rotating backgrounds, blur on scroll,
  *    acrylic panels, banner carousel with pips, news tabs, playtime.
- *  - Play: streams straight from your cloud PC (built-in host, no Setup); with no PC it opens Genshin Impact Cloud. The split arrow has
+ *  - Play: streams straight from your cloud PC (built-in host, no Setup). The split arrow has
  *    Start/Stop host (GitHub Actions), Wake PC, all hosts, VPN and setup.
- *  - Play without a PC: Genshin Impact Cloud (official) and GeForce NOW.
  */
 public class CloudSyncActivity extends Activity implements SensorEventListener {
     private static final String PREFS = "cloudsync";
     private static final String API = "https://sg-hyp-api.hoyoverse.com/hyp/hyp-connect/api/";
     private static final String LAUNCHER_ID = "VYTpXlbWo8";
-    private static final String CLOUD_GENSHIN_PKG = "com.hoyoverse.cloudgames.GenshinImpact";
-    private static final String GFN_PKG = "com.nvidia.geforcenow";
 
     private static final int ACCENT = Color.parseColor("#FFD52A");   // Collapse accent
     private static final int INK = Color.parseColor("#0E0F13");
@@ -350,19 +347,6 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         chip(w1, "Get Cloudstream", v -> openUrl("https://github.com/recloudstream/cloudstream/releases/latest"));
         chip(w2, "Live on Twitch", v -> openUrl("https://www.twitch.tv/directory/category/" + twitchSlug()));
         chip(w2, "Arcade (browser)", v -> openUrl("https://" + owner().toLowerCase() + ".github.io/" + repoName() + "/arcade.html"));
-
-        // No-PC cloud: official HoYoverse cloud and GeForce NOW stream the game from
-        // their servers, so nothing is downloaded and no PC or VM is needed.
-        LinearLayout np = panel(col, "Play without a PC");
-        np.addView(text("Genshin Impact \u00b7 Cloud is HoYoverse's official cloud version (US, Canada and SEA, incl. Philippines). "
-                + "GeForce NOW also streams HoYoverse games. Same account and saves.", 13, MUTED, false));
-        LinearLayout n1 = chipRow(np), n2 = chipRow(np);
-        chip(n1, "Genshin \u00b7 Cloud app", v -> openCloudGenshin());
-        chip(n1, "Genshin \u00b7 Cloud web", v -> openUrl("https://cloudgenshin.hoyoverse.com/en-us"));
-        chip(n2, "GeForce NOW", v -> openApp(GFN_PKG));
-        chip(n2, "GeForce NOW web", v -> openUrl("https://play.geforcenow.com/"));
-        LinearLayout n3 = chipRow(np);
-        chip(n3, "Install APK / XAPK from phone", v -> XapkInstaller.pick(this));
 
         // Cloud PC panel
         LinearLayout pc = panel(col, "Cloud PC");
@@ -874,8 +858,6 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         m.getMenu().add(0, 5, 4, "Private network");
         m.getMenu().add(0, 6, 5, "Website and console");
         m.getMenu().add(0, 7, 6, "Setup");
-        m.getMenu().add(0, 8, 7, "Genshin \u00b7 Cloud (no PC)");
-        m.getMenu().add(0, 9, 8, "GeForce NOW (no PC)");
         m.setOnMenuItemClickListener(it -> {
             switch (it.getItemId()) {
                 case 1: dispatch("start"); break;
@@ -885,8 +867,6 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 case 5: openTailscale(); break;
                 case 6: openUrl("https://" + owner().toLowerCase() + ".github.io/" + repoName() + "/"); break;
                 case 7: setup(); break;
-                case 8: openCloudGenshin(); break;
-                case 9: openApp(GFN_PKG); break;
             }
             return true;
         });
@@ -955,7 +935,7 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 JSONObject h = st.optJSONObject("host");
                 final String s; final int c;
                 if (h == null || !h.optBoolean("configured")) {
-                    s = host().isEmpty() ? "No cloud PC yet: Play uses Genshin Impact \u00b7 Cloud" : "Host: " + host();
+                    s = host().isEmpty() ? "No cloud PC connected yet" : "Host: " + host();
                     c = Color.parseColor("#F0B43C");
                 } else if (h.optBoolean("online")) {
                     s = "Online" + (h.isNull("ms") ? "" : " · " + h.optInt("ms") + " ms") + ". Ready to play.";
@@ -1029,9 +1009,16 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
         final String host = host();
         final String name = gameTitle.getText().toString();
         if (host.isEmpty()) {
-            // No own cloud PC configured: go straight to HoYoverse's official cloud, no Setup screen.
-            if (name.toLowerCase().contains("genshin")) { openCloudGenshin(); }
-            else { toast("No cloud PC yet. Opening GeForce NOW."); openApp(GFN_PKG); }
+            // Unlimited play needs your own cloud PC; nothing is installed on the phone.
+            new AlertDialog.Builder(this)
+                    .setTitle("No cloud PC connected yet")
+                    .setMessage("CloudSync streams " + name + " from your own cloud PC, so there's no time limit and "
+                            + "nothing is saved on this phone. Add the repo variable CG_HOST (and AWS keys) once, "
+                            + "rebuild, and Play goes straight into the game.")
+                    .setPositiveButton("Setup guide", (d, w) -> openUrl("https://github.com/" + repo() + "/blob/main/docs/GENSHIN.md"))
+                    .setNeutralButton("Enter host", (d, w) -> setup())
+                    .setNegativeButton("Close", null)
+                    .show();
             return;
         }
         toast("Connecting to your cloud PC...");
@@ -1169,29 +1156,6 @@ public class CloudSyncActivity extends Activity implements SensorEventListener {
                 .setPositiveButton("Get Tailscale", (d, w) -> openUrl("market://details?id=com.tailscale.ipn"))
                 .setNegativeButton("Close", null)
                 .show();
-    }
-
-    /** Opens Genshin Impact Cloud; if missing, install it from a file (no Play Store) or the store. */
-    private void openCloudGenshin() {
-        Intent launch = getPackageManager().getLaunchIntentForPackage(CLOUD_GENSHIN_PKG);
-        if (launch != null) { startActivity(launch); return; }
-        new AlertDialog.Builder(this)
-                .setTitle("Genshin Impact \u00b7 Cloud")
-                .setMessage("Not installed yet. It streams the game from HoYoverse servers, so the app is small and "
-                        + "no game files go on your phone.\n\nInstall from file: pick an APK/XAPK of "
-                        + "Genshin Impact \u00b7 Cloud you downloaded (package " + CLOUD_GENSHIN_PKG + ").")
-                .setPositiveButton("Install from file", (d, w) -> XapkInstaller.pick(this))
-                .setNeutralButton("Google Play", (d, w) -> openUrl("market://details?id=" + CLOUD_GENSHIN_PKG))
-                .setNegativeButton("Close", null)
-                .show();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == XapkInstaller.PICK_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            XapkInstaller.install(this, data.getData());
-        }
     }
 
     /** Launch an installed app, otherwise open its Play Store page. */

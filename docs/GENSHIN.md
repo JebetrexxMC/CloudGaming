@@ -1,14 +1,7 @@
 # Genshin Impact on your cloud host
 
-## No exe, no PC: the fastest option
-You don't need to download the game or install an .exe if you use a cloud service that already has it:
-
-* **Genshin Impact · Cloud** (official, by HoYoverse). It's an app ([Google Play](https://play.google.com/store/apps/details?id=com.hoyoverse.cloudgames.GenshinImpact)) or a [web page](https://cloudgenshin.hoyoverse.com/en-us). It supports the US, Canada and SEA, including the Philippines. You log in with the same HoYoverse account and keep your saves.
-* **GeForce NOW**. The free tier gives 1-hour sessions with ads and a queue. You can start again right after, with no daily limit.
-
-**No Play Store?** CloudSync has **Install APK / XAPK from phone**. It installs an .apk/.xapk/.apks file you downloaded yourself (split APKs are handled), using Android's normal installer prompt. CloudSync does not bundle or host any game files. For Genshin, install **Genshin Impact · Cloud** (`com.hoyoverse.cloudgames.GenshinImpact`, small, streams). The full Genshin XAPK installs the whole game on the phone (20+ GB after first start), so it does not stream.
-
-In CloudSync, use **Play without a PC** or the arrow next to Start Game. The rest of this guide is for your **own** host (AWS/home PC + Sunshine/Apollo), which has no session limit but needs the Windows game files (~100 GB) on that host.
+## How CloudSync plays Genshin
+Genshin (the Windows version) is installed **only on your cloud PC**. CloudSync's Play button connects, starts the PC if it's off, and opens Genshin straight into the stream. Nothing is downloaded to the phone, and there's no session or minute limit (unlike Genshin Impact · Cloud's free minutes or GeForce NOW's 1-hour sessions). The only limit is what the cloud PC costs per hour.
 
 ## Why it's "unlimited"
 * Your own VM has **no session timer, no queue, and no idle kick**. `keepalive.ps1` stops Windows from sleeping or locking, and restarts Apollo/Sunshine if it crashes.

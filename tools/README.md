@@ -63,13 +63,5 @@
 | [GamingAnywhere](https://github.com/chunying/gaminganywhere) | Research cloud-gaming platform (2013). Useful for reading about the architecture. Apollo/Sunshine + Moonlight replaced it for real use |
 | [moxygen](https://github.com/JebetrexxMC/moxygen) | Media-over-QUIC. A possible future transport, not used yet |
 
-## Play without your own PC
-| Tool | Role here |
-| --- | --- |
-| [Genshin Impact · Cloud](https://cloudgenshin.hoyoverse.com/en-us) | HoYoverse's official cloud version: no download, no PC. US, Canada and SEA (incl. Philippines). Button in CloudSync -> "Play without a PC" |
-| [GeForce NOW](https://play.geforcenow.com/) | NVIDIA cloud, lists HoYoverse games. Free tier: 1-hour sessions, unlimited restarts. Button in CloudSync |
-| [OpenNOW](https://github.com/OpenCloudGaming/OpenNOW) | Open-source custom GeForce NOW client (Rust). Linked only: no license file, so no code copied |
-| [XJAUS](https://github.com/perjesus111-hub/xjaus) | Xbox Cloud Gaming / Remote Play desktop client (Linux, Windows). Linked only |
-| [xbox-cloud-gaming topic](https://github.com/topics/xbox-cloud-gaming) | More Xbox Cloud clients (Better xCloud, Greenlight...). Genshin is not on Xbox Cloud, so these are for other games |
-| [LibreRemotePlay](https://github.com/PiterWeb/LibreRemotePlay) | WebRTC "Steam Remote Play" alternative: share a host's game into a browser for co-op. Linked only |
-| [CloudyPad](https://github.com/PierreBeucher/cloudypad) | Deploy your own cloud gaming VM (already in `cloud/cloudypad/`) |
+## Not used (time-limited services)
+Genshin Impact · Cloud (free minutes), GeForce NOW (1-hour free sessions), [OpenNOW](https://github.com/OpenCloudGaming/OpenNOW), [XJAUS](https://github.com/perjesus111-hub/xjaus) / [Xbox Cloud](https://github.com/topics/xbox-cloud-gaming) clients. CloudSync streams only from your own host. Related: [LibreRemotePlay](https://github.com/PiterWeb/LibreRemotePlay) (WebRTC co-op), [CloudyPad](https://github.com/PierreBeucher/cloudypad) (in `cloud/cloudypad/`).
