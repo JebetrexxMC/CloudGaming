@@ -6,6 +6,8 @@ You don't need to download the game or install an .exe if you use a cloud servic
 * **Genshin Impact · Cloud** (official, by HoYoverse). It's an app ([Google Play](https://play.google.com/store/apps/details?id=com.hoyoverse.cloudgames.GenshinImpact)) or a [web page](https://cloudgenshin.hoyoverse.com/en-us). It supports the US, Canada and SEA, including the Philippines. You log in with the same HoYoverse account and keep your saves.
 * **GeForce NOW**. The free tier gives 1-hour sessions with ads and a queue. You can start again right after, with no daily limit.
 
+**No Play Store?** CloudSync has **Install APK / XAPK from phone**. It installs an .apk/.xapk/.apks file you downloaded yourself (split APKs are handled), using Android's normal installer prompt. CloudSync does not bundle or host any game files. For Genshin, install **Genshin Impact · Cloud** (`com.hoyoverse.cloudgames.GenshinImpact`, small, streams). The full Genshin XAPK installs the whole game on the phone (20+ GB after first start), so it does not stream.
+
 In CloudSync, use **Play without a PC** or the arrow next to Start Game. The rest of this guide is for your **own** host (AWS/home PC + Sunshine/Apollo), which has no session limit but needs the Windows game files (~100 GB) on that host.
 
 ## Why it's "unlimited"

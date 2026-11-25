@@ -50,6 +50,9 @@ queries = '''
         <package android:name="com.lagradost.cloudstream3" />
     </queries>
 '''
+if "REQUEST_INSTALL_PACKAGES" not in src:
+    src = src.replace('<uses-permission android:name="android.permission.INTERNET" />',
+        '<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />', 1)
 if "<queries>" not in src:
     src = re.sub(r"(\s*<application\b)", queries.rstrip("\n") + r"\1", src, count=1)
 open(path, "w", encoding="utf-8").write(src)
