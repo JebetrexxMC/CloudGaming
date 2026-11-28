@@ -1,0 +1,119 @@
+{
+ "updated": 1795890071,
+ "repo": "JebetrexxMC/CloudGaming",
+ "host": {
+  "configured": false,
+  "label": "genshin-host",
+  "vpn": "",
+  "ports": {},
+  "online": false,
+  "ms": null
+ },
+ "control": {},
+ "runs": [
+  {
+   "name": "Test Sunshine installer (Windows)",
+   "status": "completed",
+   "conclusion": "success",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45543835563",
+   "updated": "2026-11-25T04:02:04Z",
+   "sha": "b620688"
+  },
+  {
+   "name": "Test Sunshine installer (Windows)",
+   "status": "completed",
+   "conclusion": "failure",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45543453125",
+   "updated": "2026-11-25T03:59:23Z",
+   "sha": "b620688"
+  },
+  {
+   "name": "Validate",
+   "status": "completed",
+   "conclusion": "success",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45543453118",
+   "updated": "2026-11-25T03:57:54Z",
+   "sha": "b620688"
+  },
+  {
+   "name": "Website (GitHub Pages)",
+   "status": "completed",
+   "conclusion": "success",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45543453115",
+   "updated": "2026-11-25T03:57:38Z",
+   "sha": "b620688"
+  },
+  {
+   "name": "Test Sunshine installer (Windows)",
+   "status": "completed",
+   "conclusion": "success",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45542517600",
+   "updated": "2026-11-25T03:49:57Z",
+   "sha": "c71c55c"
+  },
+  {
+   "name": "Build forks (Sunshine, moonlight-qt, moonlight-web-stream)",
+   "status": "completed",
+   "conclusion": "success",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45542517579",
+   "updated": "2026-11-25T04:00:37Z",
+   "sha": "c71c55c"
+  },
+  {
+   "name": "Build Android APKs",
+   "status": "completed",
+   "conclusion": "success",
+   "url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45542517555",
+   "updated": "2026-11-25T03:50:37Z",
+   "sha": "c71c55c"
+  }
+ ],
+ "apk": {
+  "status": "completed",
+  "conclusion": "success",
+  "updated": "2026-11-25T03:50:37Z",
+  "run_url": "https://github.com/JebetrexxMC/CloudGaming/actions/runs/45542517555",
+  "artifacts": [
+   {
+    "name": "cloudsync-apk",
+    "size": 17224692
+   }
+  ]
+ },
+ "release": {
+  "tag": "v1.2.2",
+  "url": "https://github.com/JebetrexxMC/CloudGaming/releases/tag/v1.2.2",
+  "assets": [
+   {
+    "name": "cloudsync-debug.apk",
+    "url": "https://github.com/JebetrexxMC/CloudGaming/releases/download/v1.2.2/cloudsync-debug.apk",
+    "size": 17750365
+   },
+   {
+    "name": "moonlight-qt-windows-x64.zip",
+    "url": "https://github.com/JebetrexxMC/CloudGaming/releases/download/v1.2.2/moonlight-qt-windows-x64.zip",
+    "size": 39503641
+   },
+   {
+    "name": "moonlight-web-aarch64-unknown-linux-gnu.tar.gz",
+    "url": "https://github.com/JebetrexxMC/CloudGaming/releases/download/v1.2.2/moonlight-web-aarch64-unknown-linux-gnu.tar.gz",
+    "size": 10155473
+   },
+   {
+    "name": "moonlight-web-x86_64-unknown-linux-gnu.tar.gz",
+    "url": "https://github.com/JebetrexxMC/CloudGaming/releases/download/v1.2.2/moonlight-web-x86_64-unknown-linux-gnu.tar.gz",
+    "size": 9967974
+   },
+   {
+    "name": "Sunshine-Windows-AMD64-installer.msi",
+    "url": "https://github.com/JebetrexxMC/CloudGaming/releases/download/v1.2.2/Sunshine-Windows-AMD64-installer.msi",
+    "size": 53413266
+   },
+   {
+    "name": "Sunshine-Windows-AMD64-portable.zip",
+    "url": "https://github.com/JebetrexxMC/CloudGaming/releases/download/v1.2.2/Sunshine-Windows-AMD64-portable.zip",
+    "size": 61398076
+   }
+  ]
+ }
+}
